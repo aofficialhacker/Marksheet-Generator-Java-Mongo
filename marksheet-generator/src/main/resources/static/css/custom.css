@@ -2,52 +2,62 @@
 
 /* Global Styles */
 body {
-    background: linear-gradient(to right, #74ebd5, #ACB6E5);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #343a40;
-  }
-  
-  /* Navigation Bar */
-  .navbar-brand {
-    font-weight: bold;
-    font-size: 1.8rem;
-  }
-  
-  /* Card enhancements */
-  .card {
-    border-radius: 1rem;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    margin-bottom: 20px;
-    transition: transform 0.2s ease-in-out;
-  }
-  
-  .card:hover {
-    transform: translateY(-5px);
-  }
-  
-  /* Footer styles */
-  footer {
-    background: #343a40;
-    color: white;
-    padding: 20px 0;
-    text-align: center;
-    margin-top: 40px;
-  }
-  
-  /* Button enhancements */
-  .btn {
-    transition: background-color 0.2s ease-in-out, transform 0.2s;
-  }
-  
-  .btn:hover {
-    transform: scale(1.02);
-  }
-  
-  /* Chart container */
-  .chart-container {
-    position: relative;
-    margin: auto;
-    height: 300px;
-    width: 100%;
-  }
-  
+  background: linear-gradient(to right, #74ebd5, #ACB6E5);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #343a40;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark mode overrides */
+body.dark-mode {
+  background: #343a40;
+  color: #f8f9fa;
+}
+
+.navbar.dark-mode {
+  background-color: #212529 !important;
+}
+
+/* Navigation Bar */
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.8rem;
+}
+
+/* Card enhancements */
+.card {
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  margin-bottom: 20px;
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+/* Footer styles */
+footer {
+  background: #343a40;
+  color: white;
+  padding: 20px 0;
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* Button enhancements */
+.btn {
+  transition: background-color 0.2s ease-in-out, transform 0.2s;
+}
+
+.btn:hover {
+  transform: scale(1.02);
+}
+
+/* Chart container */
+.chart-container {
+  position: relative;
+  margin: auto;
+  height: 300px;
+  width: 100%;
+}

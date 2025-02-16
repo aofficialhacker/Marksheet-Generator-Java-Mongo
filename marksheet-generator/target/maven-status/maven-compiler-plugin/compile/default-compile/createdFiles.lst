@@ -1,6 +1,8 @@
 com\example\marksheetgenerator\repository\MarksheetRepository.class
-com\example\marksheetgenerator\MarksheetGeneratorApplication.class
-com\example\App.class
 com\example\marksheetgenerator\model\Marksheet.class
 com\example\marksheetgenerator\service\MarksheetService.class
+com\example\marksheetgenerator\api\MarksheetApiController.class
 com\example\marksheetgenerator\controller\MarksheetController.class
+com\example\marksheetgenerator\MarksheetGeneratorApplication.class
+com\example\App.class
+com\example\marksheetgenerator\config\SecurityConfig.class

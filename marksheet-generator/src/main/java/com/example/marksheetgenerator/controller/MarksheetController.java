@@ -8,10 +8,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 
 @Controller
 public class MarksheetController {
@@ -34,11 +34,27 @@ public class MarksheetController {
     @PostMapping("/generate")
     public String generateMarksheet(@Valid @ModelAttribute("marksheet") Marksheet marksheet,
             BindingResult result,
+            @RequestParam("profilePictureFile") MultipartFile file,
             Model model) {
         if (result.hasErrors()) {
-            // If validation errors, return the form with error messages
             return "marksheet_form";
         }
+
+        // Handle file upload if a file is provided
+        if (!file.isEmpty()) {
+            try {
+                String uploadDir = "src/main/resources/static/uploads/";
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                java.nio.file.Path path = java.nio.file.Paths.get(uploadDir + fileName);
+                java.nio.file.Files.createDirectories(path.getParent());
+                java.nio.file.Files.write(path, file.getBytes());
+                marksheet.setProfilePicture(fileName);
+            } catch (IOException e) {
+                e.printStackTrace();
+                // Optionally, add an error message to the model
+            }
+        }
+
         Marksheet savedMarksheet = marksheetService.generateAndSaveMarksheet(marksheet);
         model.addAttribute("marksheet", savedMarksheet);
         return "marksheet_view";
@@ -73,22 +89,28 @@ public class MarksheetController {
     @GetMapping("/dashboard")
     public String showDashboard(Model model) {
         model.addAttribute("stats", marksheetService.getDashboardStats());
+        model.addAttribute("gradeDistribution", marksheetService.getGradeDistribution());
         return "dashboard";
     }
 
-    // NEW FEATURE: Export marksheets to CSV
+    @GetMapping("/login")
+    public String showLogin() {
+        return "login";
+    }
+
+    // NEW: Export marksheets to CSV
     @GetMapping("/marksheets/export")
     public void exportCSV(HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         String filename = "marksheets.csv";
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
-        List<Marksheet> marksheets = marksheetService.getAllMarksheets();
+        // Retrieve all marksheets
+        var marksheets = marksheetService.getAllMarksheets();
         PrintWriter writer = response.getWriter();
-        // CSV Header
+        // CSV header
         writer.println("Student Name,Roll Number,Class,Date of Birth,Math,Science,English,Total,Percentage,Grade");
-
-        // CSV Data Rows
+        // CSV rows
         for (Marksheet m : marksheets) {
             writer.println(String.format("\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%d,%d,%.2f,\"%s\"",
                     m.getStudentName(),

@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard</title>
+  <title>Dashboard - Marksheet App</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="/css/custom.css" rel="stylesheet">
-  <!-- Include Chart.js from CDN -->
+  <!-- Include Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -18,11 +19,17 @@
           <li class="nav-item"><a class="nav-link" href="/">Add Marksheet</a></li>
           <li class="nav-item"><a class="nav-link" href="/marksheets">View All</a></li>
           <li class="nav-item"><a class="nav-link active" href="/dashboard">Dashboard</a></li>
+          <li class="nav-item">
+            <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button>
+          </li>
+          <li class="nav-item" sec:authorize="isAuthenticated()">
+            <a class="nav-link" href="/logout">Logout</a>
+          </li>
         </ul>
       </div>
     </div>
   </nav>
-
+  
   <div class="container mt-4">
     <h1 class="text-center mb-4">Dashboard</h1>
     <div class="row">
@@ -64,20 +71,30 @@
       </div>
     </div>
     
-    <!-- Chart Section -->
+    <!-- Bar Chart Section -->
     <div class="chart-container mt-4">
       <canvas id="marksChart"></canvas>
     </div>
+    
+    <!-- Pie Chart Section -->
+    <div class="chart-container mt-4">
+      <canvas id="gradePieChart"></canvas>
+    </div>
   </div>
-
+  
   <footer>
     <div class="container">
       <p>&copy; 2025 Marksheet Generator. All rights reserved.</p>
     </div>
   </footer>
-
-  <!-- Chart.js Script -->
+  
+  <!-- Chart.js Script for Bar Chart -->
   <script th:inline="javascript">
+    /*<![CDATA[*/
+    var avgMath = [[${stats.avgMath}]];
+    var avgScience = [[${stats.avgScience}]];
+    var avgEnglish = [[${stats.avgEnglish}]];
+    
     const ctx = document.getElementById('marksChart').getContext('2d');
     const marksChart = new Chart(ctx, {
       type: 'bar',
@@ -85,19 +102,15 @@
         labels: ['Math', 'Science', 'English'],
         datasets: [{
           label: 'Average Marks',
-          data: [
-            parseFloat([[${stats.avgMath}]]), 
-            parseFloat([[${stats.avgScience}]]), 
-            parseFloat([[${stats.avgEnglish}]])
-          ],
+          data: [avgMath, avgScience, avgEnglish],
           backgroundColor: [
-            'rgba(40,167,69,0.7)', 
-            'rgba(23,162,184,0.7)', 
+            'rgba(40,167,69,0.7)',
+            'rgba(23,162,184,0.7)',
             'rgba(255,193,7,0.7)'
           ],
           borderColor: [
-            'rgba(40,167,69,1)', 
-            'rgba(23,162,184,1)', 
+            'rgba(40,167,69,1)',
+            'rgba(23,162,184,1)',
             'rgba(255,193,7,1)'
           ],
           borderWidth: 1
@@ -113,8 +126,78 @@
         }
       }
     });
+    /*]]>*/
   </script>
-
+  
+  <!-- Chart.js Script for Pie Chart -->
+<script th:inline="javascript">
+  /*<![CDATA[*/
+    // Get the JSON data from the model; if it's empty, use static test data.
+    var gradeDist = /*[[${#json.toJson(gradeDistribution)}]]*/ '{}';
+    console.log("Grade Distribution JSON:", gradeDist);
+    
+    // Parse the JSON string (if it's already an object, this will work as well)
+    var gradeData;
+    try {
+      gradeData = typeof gradeDist === "string" ? JSON.parse(gradeDist) : gradeDist;
+    } catch(e) {
+      console.error("Error parsing gradeDistribution:", e);
+      gradeData = {"A":5, "B":3, "C":2, "D":1};
+    }
+    
+    // If gradeData is empty, use fallback static data.
+    if (Object.keys(gradeData).length === 0) {
+      gradeData = {"A":5, "B":3, "C":2, "D":1};
+    }
+    
+    console.log("Final gradeData:", gradeData);
+  
+    var gradeLabels = Object.keys(gradeData);
+    var gradeCounts = Object.values(gradeData);
+  
+    const pieCtx = document.getElementById('gradePieChart').getContext('2d');
+    const gradePieChart = new Chart(pieCtx, {
+      type: 'pie',
+      data: {
+        labels: gradeLabels,
+        datasets: [{
+          data: gradeCounts,
+          backgroundColor: [
+            'rgba(255,99,132,0.7)',
+            'rgba(54,162,235,0.7)',
+            'rgba(255,206,86,0.7)',
+            'rgba(75,192,192,0.7)',
+            'rgba(153,102,255,0.7)'
+          ],
+          borderColor: [
+            'rgba(255,99,132,1)',
+            'rgba(54,162,235,1)',
+            'rgba(255,206,86,1)',
+            'rgba(75,192,192,1)',
+            'rgba(153,102,255,1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true
+      }
+    });
+  /*]]>*/
+  </script>
+  
+  
+  <!-- Theme Toggle Script -->
+  <script>
+    document.getElementById("themeToggle").addEventListener("click", function() {
+      document.body.classList.toggle("dark-mode");
+      document.querySelectorAll(".navbar").forEach(function(navbar) {
+        navbar.classList.toggle("dark-mode");
+      });
+      this.textContent = document.body.classList.contains("dark-mode") ? "Light Mode" : "Dark Mode";
+    });
+  </script>
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

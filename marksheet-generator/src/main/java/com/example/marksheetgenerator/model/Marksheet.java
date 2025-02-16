@@ -3,7 +3,6 @@ package com.example.marksheetgenerator.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
-
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -26,7 +25,7 @@ public class Marksheet {
     private String className;
 
     @NotNull(message = "Date of birth is required")
-    @DateTimeFormat(pattern = "yyyy-MM-dd") // For form binding
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate dob;
 
     @Min(value = 0, message = "Marks cannot be less than 0")
@@ -45,8 +44,10 @@ public class Marksheet {
     private double percentage;
     private String grade;
 
+    // New field for profile picture
+    private String profilePicture;
+
     public Marksheet() {
-        // Default constructor
     }
 
     public Marksheet(String studentName, String rollNumber, String className, LocalDate dob,
@@ -64,17 +65,17 @@ public class Marksheet {
     public void calculateResults() {
         this.total = this.math + this.science + this.english;
         this.percentage = total / 3.0;
-        this.grade = (percentage >= 75) ? "A"
-                : (percentage >= 60) ? "B"
-                        : (percentage >= 40) ? "C"
-                                : "D";
+        this.grade = (percentage >= 75) ? "A" : (percentage >= 60) ? "B" : (percentage >= 40) ? "C" : "D";
     }
 
     // Getters and setters
-    // ------------------------------------------------
 
     public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getStudentName() {
@@ -145,7 +146,11 @@ public class Marksheet {
         return grade;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
     }
 }

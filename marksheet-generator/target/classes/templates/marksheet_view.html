@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <title>Generated Marksheet</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="/css/custom.css" rel="stylesheet">
-  <!-- Include jsPDF Library -->
+  <!-- Include jsPDF and html2canvas libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
   <!-- Navigation Bar -->
@@ -18,6 +20,13 @@
           <li class="nav-item"><a class="nav-link" href="/">Add Marksheet</a></li>
           <li class="nav-item"><a class="nav-link" href="/marksheets">View All</a></li>
           <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+          <li class="nav-item">
+            <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button>
+          </li>
+          <!-- Show logout only if user is authenticated (requires thymeleaf-extras-springsecurity6) -->
+          <li class="nav-item" sec:authorize="isAuthenticated()">
+            <a class="nav-link" href="/logout">Logout</a>
+          </li>
         </ul>
       </div>
     </div>
@@ -25,12 +34,21 @@
 
   <div class="container mt-4">
     <h1 class="text-center mb-4">Marksheet</h1>
-    <div class="card">
-      <div class="card-body" id="marksheetContent">
+    <!-- This card will be captured as an image for the PDF -->
+    <div class="card" id="marksheetContent">
+      <div class="card-body">
         <p><strong>Student Name:</strong> <span th:text="${marksheet.studentName}"></span></p>
         <p><strong>Roll Number:</strong> <span th:text="${marksheet.rollNumber}"></span></p>
         <p><strong>Class:</strong> <span th:text="${marksheet.className}"></span></p>
         <p><strong>Date of Birth:</strong> <span th:text="${marksheet.dob}"></span></p>
+
+        <!-- Display profile picture if available -->
+        <div th:if="${marksheet.profilePicture != null}">
+          <img th:src="@{'/uploads/' + ${marksheet.profilePicture}}"
+               alt="Profile Picture"
+               class="img-thumbnail mb-3"
+               style="max-width: 150px;">
+        </div>
         <hr>
         <p><strong>Math:</strong> <span th:text="${marksheet.math}"></span></p>
         <p><strong>Science:</strong> <span th:text="${marksheet.science}"></span></p>
@@ -41,7 +59,9 @@
         <p><strong>Grade:</strong> <span th:text="${marksheet.grade}"></span></p>
       </div>
     </div>
+
     <div class="text-center mt-4">
+      <!-- Reverted: Download PDF button calls our JavaScript function -->
       <button class="btn btn-secondary me-2" onclick="downloadPDF()">Download PDF</button>
       <a href="/" class="btn btn-primary">Generate Another</a>
     </div>
@@ -53,15 +73,39 @@
     </div>
   </footer>
 
+  <!-- JavaScript for generating PDF from the card content -->
   <script>
     function downloadPDF() {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const content = document.getElementById("marksheetContent").innerText;
-      const lines = doc.splitTextToSize(content, 180);
-      doc.text(lines, 10, 10);
-      doc.save("marksheet.pdf");
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      // Use html2canvas to capture the card content as an image
+      html2canvas(document.getElementById("marksheetContent")).then(function(canvas) {
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps = doc.getImageProperties(imgData);
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        // Add the image to the PDF, then save
+        doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        doc.save("marksheet.pdf");
+      });
     }
+  </script>
+
+  <!-- Dark Mode Toggle Script -->
+  <script>
+    document.getElementById("themeToggle").addEventListener("click", function() {
+      document.body.classList.toggle("dark-mode");
+      document.querySelectorAll(".navbar").forEach(function(navbar) {
+        navbar.classList.toggle("dark-mode");
+      });
+      if(document.body.classList.contains("dark-mode")){
+        this.textContent = "Light Mode";
+      } else {
+        this.textContent = "Dark Mode";
+      }
+    });
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
