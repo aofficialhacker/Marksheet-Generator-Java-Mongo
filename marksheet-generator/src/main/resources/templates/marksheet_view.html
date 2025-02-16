@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Generated Marksheet</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <!-- Include jsPDF Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Marksheet App</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="/">Add Marksheet</a></li>
+          <li class="nav-item"><a class="nav-link" href="/marksheets">View All</a></li>
+          <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h1 class="text-center mb-4">Marksheet</h1>
+    <div class="card">
+      <div class="card-body" id="marksheetContent">
+        <p><strong>Student Name:</strong> <span th:text="${marksheet.studentName}"></span></p>
+        <p><strong>Roll Number:</strong> <span th:text="${marksheet.rollNumber}"></span></p>
+        <p><strong>Class:</strong> <span th:text="${marksheet.className}"></span></p>
+        <p><strong>Date of Birth:</strong> <span th:text="${marksheet.dob}"></span></p>
+        <hr>
+        <p><strong>Math:</strong> <span th:text="${marksheet.math}"></span></p>
+        <p><strong>Science:</strong> <span th:text="${marksheet.science}"></span></p>
+        <p><strong>English:</strong> <span th:text="${marksheet.english}"></span></p>
+        <hr>
+        <p><strong>Total:</strong> <span th:text="${marksheet.total}"></span></p>
+        <p><strong>Percentage:</strong> <span th:text="${marksheet.percentage}"></span>%</p>
+        <p><strong>Grade:</strong> <span th:text="${marksheet.grade}"></span></p>
+      </div>
+    </div>
+    <div class="text-center mt-4">
+      <button class="btn btn-secondary me-2" onclick="downloadPDF()">Download PDF</button>
+      <a href="/" class="btn btn-primary">Generate Another</a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Marksheet Generator. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const content = document.getElementById("marksheetContent").innerText;
+      const lines = doc.splitTextToSize(content, 180);
+      doc.text(lines, 10, 10);
+      doc.save("marksheet.pdf");
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
