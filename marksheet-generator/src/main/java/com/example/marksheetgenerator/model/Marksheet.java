@@ -28,48 +28,117 @@ public class Marksheet {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate dob;
 
-    @Min(value = 0, message = "Marks cannot be less than 0")
-    @Max(value = 100, message = "Marks cannot exceed 100")
+    // Subjects common for all classes
+    @Min(0)
+    @Max(100)
     private int math;
 
-    @Min(value = 0, message = "Marks cannot be less than 0")
-    @Max(value = 100, message = "Marks cannot exceed 100")
+    @Min(0)
+    @Max(100)
     private int science;
 
-    @Min(value = 0, message = "Marks cannot be less than 0")
-    @Max(value = 100, message = "Marks cannot exceed 100")
+    @Min(0)
+    @Max(100)
     private int english;
+
+    // 10th Class Subjects
+    @Min(0)
+    @Max(100)
+    private int hindi;
+
+    @Min(0)
+    @Max(100)
+    private int marathi;
+
+    @Min(0)
+    @Max(100)
+    private int history;
+
+    @Min(0)
+    @Max(100)
+    private int geography;
+
+    // 11th and 12th Class - Stream Field
+    private String stream; // Science, Commerce, Arts
+
+    // Science Stream Subjects
+    @Min(0)
+    @Max(100)
+    private int physics;
+
+    @Min(0)
+    @Max(100)
+    private int chemistry;
+
+    @Min(0)
+    @Max(100)
+    private int biology;
+
+    // Commerce Stream Subjects
+    @Min(0)
+    @Max(100)
+    private int economics;
+
+    @Min(0)
+    @Max(100)
+    private int businessStudies;
+
+    @Min(0)
+    @Max(100)
+    private int accountancy;
+
+    // Arts Stream Subjects
+    @Min(0)
+    @Max(100)
+    private int politicalScience;
+
+    @Min(0)
+    @Max(100)
+    private int sociology;
 
     private int total;
     private double percentage;
     private String grade;
 
-    // New field for profile picture
+    // Profile Picture
     private String profilePicture;
 
     public Marksheet() {
     }
 
-    public Marksheet(String studentName, String rollNumber, String className, LocalDate dob,
-            int math, int science, int english) {
+    public Marksheet(String studentName, String rollNumber, String className, LocalDate dob) {
         this.studentName = studentName;
         this.rollNumber = rollNumber;
         this.className = className;
         this.dob = dob;
-        this.math = math;
-        this.science = science;
-        this.english = english;
-        calculateResults();
     }
 
+    // Method to calculate total marks and grade based on class type
     public void calculateResults() {
-        this.total = this.math + this.science + this.english;
-        this.percentage = total / 3.0;
+        if ("10th".equals(className)) {
+            this.total = math + science + english + hindi + marathi + history + geography;
+            this.percentage = total / 7.0;
+        } else if ("11th".equals(className) || "12th".equals(className)) {
+            if ("Science".equalsIgnoreCase(stream)) {
+                this.total = math + physics + chemistry + biology;
+                this.percentage = total / 4.0;
+            } else if ("Commerce".equalsIgnoreCase(stream)) {
+                this.total = math + economics + businessStudies + accountancy;
+                this.percentage = total / 4.0;
+            } else if ("Arts".equalsIgnoreCase(stream)) {
+                this.total = history + politicalScience + sociology + geography;
+                this.percentage = total / 4.0;
+            } else {
+                this.total = 0;
+                this.percentage = 0;
+            }
+        }
+
+        // Assign grades based on percentage
         this.grade = (percentage >= 75) ? "A" : (percentage >= 60) ? "B" : (percentage >= 40) ? "C" : "D";
     }
 
-    // Getters and setters
-
+    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -132,6 +201,110 @@ public class Marksheet {
 
     public void setEnglish(int english) {
         this.english = english;
+    }
+
+    public int getHindi() {
+        return hindi;
+    }
+
+    public void setHindi(int hindi) {
+        this.hindi = hindi;
+    }
+
+    public int getMarathi() {
+        return marathi;
+    }
+
+    public void setMarathi(int marathi) {
+        this.marathi = marathi;
+    }
+
+    public int getHistory() {
+        return history;
+    }
+
+    public void setHistory(int history) {
+        this.history = history;
+    }
+
+    public int getGeography() {
+        return geography;
+    }
+
+    public void setGeography(int geography) {
+        this.geography = geography;
+    }
+
+    public String getStream() {
+        return stream;
+    }
+
+    public void setStream(String stream) {
+        this.stream = stream;
+    }
+
+    public int getPhysics() {
+        return physics;
+    }
+
+    public void setPhysics(int physics) {
+        this.physics = physics;
+    }
+
+    public int getChemistry() {
+        return chemistry;
+    }
+
+    public void setChemistry(int chemistry) {
+        this.chemistry = chemistry;
+    }
+
+    public int getBiology() {
+        return biology;
+    }
+
+    public void setBiology(int biology) {
+        this.biology = biology;
+    }
+
+    public int getEconomics() {
+        return economics;
+    }
+
+    public void setEconomics(int economics) {
+        this.economics = economics;
+    }
+
+    public int getBusinessStudies() {
+        return businessStudies;
+    }
+
+    public void setBusinessStudies(int businessStudies) {
+        this.businessStudies = businessStudies;
+    }
+
+    public int getAccountancy() {
+        return accountancy;
+    }
+
+    public void setAccountancy(int accountancy) {
+        this.accountancy = accountancy;
+    }
+
+    public int getPoliticalScience() {
+        return politicalScience;
+    }
+
+    public void setPoliticalScience(int politicalScience) {
+        this.politicalScience = politicalScience;
+    }
+
+    public int getSociology() {
+        return sociology;
+    }
+
+    public void setSociology(int sociology) {
+        this.sociology = sociology;
     }
 
     public int getTotal() {

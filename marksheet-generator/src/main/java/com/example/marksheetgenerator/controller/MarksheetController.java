@@ -1,9 +1,12 @@
 package com.example.marksheetgenerator.controller;
 
 import com.example.marksheetgenerator.model.Marksheet;
+import com.example.marksheetgenerator.model.StudentUser;
+import com.example.marksheetgenerator.repository.StudentUserRepository;
 import com.example.marksheetgenerator.service.MarksheetService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -12,22 +15,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.format.DateTimeFormatter;
 
 @Controller
 public class MarksheetController {
 
     private final MarksheetService marksheetService;
+    private final StudentUserRepository studentUserRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    public MarksheetController(MarksheetService marksheetService) {
+    public MarksheetController(MarksheetService marksheetService,
+            StudentUserRepository studentUserRepository,
+            BCryptPasswordEncoder passwordEncoder) {
         this.marksheetService = marksheetService;
-    }
-
-    // Display the form (used for both creating a new Marksheet and editing an
-    // existing one)
-    @GetMapping("/")
-    public String showForm(Model model) {
-        model.addAttribute("marksheet", new Marksheet());
-        return "marksheet_form";
+        this.studentUserRepository = studentUserRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // Process form submission for creating or updating a Marksheet
@@ -55,8 +57,23 @@ public class MarksheetController {
             }
         }
 
+        // Save the marksheet
         Marksheet savedMarksheet = marksheetService.generateAndSaveMarksheet(marksheet);
         model.addAttribute("marksheet", savedMarksheet);
+
+        // Create a student user record if it doesn't exist
+        String rollNumber = savedMarksheet.getRollNumber();
+        if (!studentUserRepository.existsById(rollNumber)) {
+            // Format the date of birth to ddMMyyyy and encode it
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+            String dobStr = savedMarksheet.getDob().format(formatter);
+            String hashedPassword = passwordEncoder.encode(dobStr);
+
+            // Create and save a new StudentUser
+            StudentUser newUser = new StudentUser(rollNumber, hashedPassword);
+            studentUserRepository.save(newUser);
+        }
+
         return "marksheet_view";
     }
 
@@ -76,7 +93,7 @@ public class MarksheetController {
     public String editMarksheet(@PathVariable String id, Model model) {
         Marksheet existing = marksheetService.getMarksheetById(id);
         model.addAttribute("marksheet", existing);
-        return "marksheet_form"; // Reuse the same form for editing
+        return "marksheet_form";
     }
 
     // Delete a Marksheet
@@ -86,31 +103,29 @@ public class MarksheetController {
         return "redirect:/marksheets";
     }
 
+    // Dashboard endpoint (unchanged)
     @GetMapping("/dashboard")
     public String showDashboard(Model model) {
-        model.addAttribute("stats", marksheetService.getDashboardStats());
-        model.addAttribute("gradeDistribution", marksheetService.getGradeDistribution());
+        model.addAttribute("stats", marksheetService.getDashboardData());
         return "dashboard";
     }
 
+    // Login page endpoint (unchanged)
     @GetMapping("/login")
     public String showLogin() {
         return "login";
     }
 
-    // NEW: Export marksheets to CSV
+    // Export marksheets to CSV (unchanged)
     @GetMapping("/marksheets/export")
     public void exportCSV(HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         String filename = "marksheets.csv";
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
-        // Retrieve all marksheets
         var marksheets = marksheetService.getAllMarksheets();
         PrintWriter writer = response.getWriter();
-        // CSV header
         writer.println("Student Name,Roll Number,Class,Date of Birth,Math,Science,English,Total,Percentage,Grade");
-        // CSV rows
         for (Marksheet m : marksheets) {
             writer.println(String.format("\"%s\",\"%s\",\"%s\",\"%s\",%d,%d,%d,%d,%.2f,\"%s\"",
                     m.getStudentName(),
