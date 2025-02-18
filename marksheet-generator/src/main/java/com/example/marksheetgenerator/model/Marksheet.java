@@ -3,6 +3,7 @@ package com.example.marksheetgenerator.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -26,9 +27,9 @@ public class Marksheet {
 
     @NotNull(message = "Date of birth is required")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dob;
 
-    // Subjects common for all classes
     @Min(0)
     @Max(100)
     private int math;
@@ -41,7 +42,6 @@ public class Marksheet {
     @Max(100)
     private int english;
 
-    // 10th Class Subjects
     @Min(0)
     @Max(100)
     private int hindi;
@@ -58,10 +58,9 @@ public class Marksheet {
     @Max(100)
     private int geography;
 
-    // 11th and 12th Class - Stream Field
-    private String stream; // Science, Commerce, Arts
+    // For 11th/12th classes
+    private String stream;
 
-    // Science Stream Subjects
     @Min(0)
     @Max(100)
     private int physics;
@@ -74,7 +73,6 @@ public class Marksheet {
     @Max(100)
     private int biology;
 
-    // Commerce Stream Subjects
     @Min(0)
     @Max(100)
     private int economics;
@@ -87,7 +85,6 @@ public class Marksheet {
     @Max(100)
     private int accountancy;
 
-    // Arts Stream Subjects
     @Min(0)
     @Max(100)
     private int politicalScience;
@@ -100,7 +97,7 @@ public class Marksheet {
     private double percentage;
     private String grade;
 
-    // Profile Picture
+    // Profile Picture filename
     private String profilePicture;
 
     public Marksheet() {
@@ -113,7 +110,7 @@ public class Marksheet {
         this.dob = dob;
     }
 
-    // Method to calculate total marks and grade based on class type
+    // Calculate total marks, percentage and assign grade
     public void calculateResults() {
         if ("10th".equals(className)) {
             this.total = math + science + english + hindi + marathi + history + geography;
@@ -133,12 +130,11 @@ public class Marksheet {
                 this.percentage = 0;
             }
         }
-
-        // Assign grades based on percentage
         this.grade = (percentage >= 75) ? "A" : (percentage >= 60) ? "B" : (percentage >= 40) ? "C" : "D";
     }
 
     // Getters and Setters
+
     public String getId() {
         return id;
     }

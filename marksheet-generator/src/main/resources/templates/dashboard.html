@@ -11,20 +11,29 @@
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="/">Marksheet App</a>
-        <div class="collapse navbar-collapse">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item"><a class="nav-link" href="/">Add Marksheet</a></li>
-            <li class="nav-item"><a class="nav-link" href="/marksheets">View All</a></li>
-            <li class="nav-item"><a class="nav-link active" href="/dashboard">Dashboard</a></li>
-            <li class="nav-item" sec:authorize="isAuthenticated()">
-                <a class="nav-link" href="/logout">Logout</a>
-            </li>
-          </ul>
+        <div class="container-fluid">
+          <a class="navbar-brand" href="/">Marksheet App</a>
+          <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+              <!-- Teacher-specific links -->
+              <li class="nav-item" sec:authorize="hasRole('TEACHER')">
+                <a class="nav-link" th:href="@{/teacher/addMarksheet}">Add Marksheet</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" th:href="@{/marksheets}">View All</a>
+              </li>
+              <li class="nav-item" sec:authorize="hasRole('TEACHER')">
+                <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
+              </li>
+              <li class="nav-item" sec:authorize="hasRole('TEACHER')">
+                <a class="nav-link" th:href="@{/teacher/logout}">Logout</a>
+              </li>
+              <!-- For non-teachers, you can have different links if needed -->
+            </ul>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+      
     
     <div class="container mt-4">
         <h1 class="text-center mb-4">Dashboard</h1>

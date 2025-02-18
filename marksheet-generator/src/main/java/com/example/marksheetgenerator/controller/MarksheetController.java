@@ -6,6 +6,7 @@ import com.example.marksheetgenerator.repository.StudentUserRepository;
 import com.example.marksheetgenerator.service.MarksheetService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,7 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 public class MarksheetController {
@@ -32,7 +36,6 @@ public class MarksheetController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Process form submission for creating or updating a Marksheet
     @PostMapping("/generate")
     public String generateMarksheet(@Valid @ModelAttribute("marksheet") Marksheet marksheet,
             BindingResult result,
@@ -42,7 +45,7 @@ public class MarksheetController {
             return "marksheet_form";
         }
 
-        // Handle file upload if a file is provided
+        // Handle file upload if provided
         if (!file.isEmpty()) {
             try {
                 String uploadDir = "src/main/resources/static/uploads/";
@@ -53,23 +56,20 @@ public class MarksheetController {
                 marksheet.setProfilePicture(fileName);
             } catch (IOException e) {
                 e.printStackTrace();
-                // Optionally, add an error message to the model
             }
         }
 
-        // Save the marksheet
+        // Save the marksheet and display it
         Marksheet savedMarksheet = marksheetService.generateAndSaveMarksheet(marksheet);
         model.addAttribute("marksheet", savedMarksheet);
 
         // Create a student user record if it doesn't exist
         String rollNumber = savedMarksheet.getRollNumber();
         if (!studentUserRepository.existsById(rollNumber)) {
-            // Format the date of birth to ddMMyyyy and encode it
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
-            String dobStr = savedMarksheet.getDob().format(formatter);
+            String dobStr = savedMarksheet.getDob().atStartOfDay(ZoneOffset.UTC).format(formatter); // Ensure UTC date
+                                                                                                    // format
             String hashedPassword = passwordEncoder.encode(dobStr);
-
-            // Create and save a new StudentUser
             StudentUser newUser = new StudentUser(rollNumber, hashedPassword);
             studentUserRepository.save(newUser);
         }
@@ -77,18 +77,38 @@ public class MarksheetController {
         return "marksheet_view";
     }
 
-    // List all marksheets, or search by query parameter
     @GetMapping("/marksheets")
-    public String listMarksheets(@RequestParam(name = "search", required = false) String search, Model model) {
-        if (search != null && !search.trim().isEmpty()) {
-            model.addAttribute("marksheets", marksheetService.searchMarksheets(search));
+    public String listMarksheets(@RequestParam(name = "search", required = false) String search,
+            Model model,
+            Authentication authentication) {
+        List<Marksheet> marksheets;
+        if (authentication != null &&
+                authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"))) {
+            String teacherUsername = authentication.getName();
+            String assignedClass = switch (teacherUsername) {
+                case "teacher1" -> "10th";
+                case "teacher2" -> "11th";
+                case "teacher3" -> "12th";
+                default -> "";
+            };
+
+            final String finalAssignedClass = assignedClass;
+            marksheets = (search != null && !search.trim().isEmpty())
+                    ? marksheetService.searchMarksheets(search).stream()
+                            .filter(ms -> finalAssignedClass.equals(ms.getClassName()))
+                            .collect(Collectors.toList())
+                    : marksheetService.getAllMarksheets().stream()
+                            .filter(ms -> finalAssignedClass.equals(ms.getClassName()))
+                            .collect(Collectors.toList());
         } else {
-            model.addAttribute("marksheets", marksheetService.getAllMarksheets());
+            marksheets = (search != null && !search.trim().isEmpty()) ? marksheetService.searchMarksheets(search)
+                    : marksheetService.getAllMarksheets();
         }
+
+        model.addAttribute("marksheets", marksheets);
         return "marksheet_list";
     }
 
-    // Load an existing Marksheet for editing
     @GetMapping("/marksheets/edit/{id}")
     public String editMarksheet(@PathVariable String id, Model model) {
         Marksheet existing = marksheetService.getMarksheetById(id);
@@ -96,34 +116,46 @@ public class MarksheetController {
         return "marksheet_form";
     }
 
-    // Delete a Marksheet
     @PostMapping("/marksheets/delete/{id}")
     public String deleteMarksheet(@PathVariable String id) {
         marksheetService.deleteMarksheetById(id);
         return "redirect:/marksheets";
     }
 
-    // Dashboard endpoint (unchanged)
     @GetMapping("/dashboard")
-    public String showDashboard(Model model) {
-        model.addAttribute("stats", marksheetService.getDashboardData());
+    public String showDashboard(Model model, Authentication authentication) {
+        List<Marksheet> marksheets = marksheetService.getAllMarksheets();
+        if (authentication != null &&
+                authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"))) {
+            String teacherUsername = authentication.getName();
+            String assignedClass = switch (teacherUsername) {
+                case "teacher1" -> "10th";
+                case "teacher2" -> "11th";
+                case "teacher3" -> "12th";
+                default -> "";
+            };
+
+            final String finalAssignedClass = assignedClass;
+            marksheets = marksheets.stream()
+                    .filter(ms -> finalAssignedClass.equals(ms.getClassName()))
+                    .collect(Collectors.toList());
+        }
+
+        model.addAttribute("stats", marksheetService.computeDashboardData(marksheets));
         return "dashboard";
     }
 
-    // Login page endpoint (unchanged)
     @GetMapping("/login")
     public String showLogin() {
         return "login";
     }
 
-    // Export marksheets to CSV (unchanged)
     @GetMapping("/marksheets/export")
     public void exportCSV(HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         String filename = "marksheets.csv";
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-
-        var marksheets = marksheetService.getAllMarksheets();
+        List<Marksheet> marksheets = marksheetService.getAllMarksheets();
         PrintWriter writer = response.getWriter();
         writer.println("Student Name,Roll Number,Class,Date of Birth,Math,Science,English,Total,Percentage,Grade");
         for (Marksheet m : marksheets) {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" 
+<html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
@@ -20,28 +20,31 @@
           <li class="nav-item" sec:authorize="hasRole('TEACHER')">
             <a class="nav-link" th:href="@{/teacher/addMarksheet}">Add Marksheet</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link active" th:href="@{/marksheets}">View All</a>
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
+            <a class="nav-link active" th:href="@{/teacher/marksheets}">View All</a>
           </li>
-          <!-- Removed teacher dashboard link -->
-          
-
           <li class="nav-item" sec:authorize="hasRole('TEACHER')">
             <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
           </li>
-
-          <!-- Logout links: teacher and student separately -->
           <li class="nav-item" sec:authorize="hasRole('TEACHER')">
             <a class="nav-link" th:href="@{/teacher/logout}">Logout</a>
           </li>
-          <li class="nav-item" sec:authorize="hasRole('STUDENT')">
+          <!-- For non-teacher users -->
+          <li class="nav-item" sec:authorize="!hasRole('TEACHER')">
+            <a class="nav-link" th:href="@{/}">Add Marksheet</a>
+          </li>
+          <li class="nav-item" sec:authorize="!hasRole('TEACHER')">
+            <a class="nav-link" th:href="@{/marksheets}">View All</a>
+          </li>
+          <li class="nav-item" sec:authorize="!hasRole('TEACHER')">
+            <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
+          </li>
+          <li class="nav-item" sec:authorize="!hasRole('TEACHER')">
             <a class="nav-link" th:href="@{/logout}">Logout</a>
           </li>
-
           <li class="nav-item">
             <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button>
           </li>
-
         </ul>
       </div>
     </div>
@@ -49,13 +52,21 @@
 
   <div class="container mt-4">
     <h1 class="mb-4 text-center">All Generated Marksheets</h1>
-    <!-- Search Form -->
-    <form method="get" action="/marksheets" class="mb-4 d-flex">
-      <input type="text" name="search" class="form-control me-2" placeholder="Search by name or roll number...">
-      <button type="submit" class="btn btn-primary">Search</button>
-      <!-- CSV Export Button -->
-      <a href="/marksheets/export" class="btn btn-success ms-2">Export to CSV</a>
-    </form>
+    <!-- Teacher-specific search form -->
+    <div sec:authorize="hasRole('TEACHER')">
+      <form method="get" action="/teacher/marksheets" class="mb-4 d-flex">
+        <input type="text" name="search" class="form-control me-2" placeholder="Search by name or roll number...">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a href="/marksheets/export" class="btn btn-success ms-2">Export to CSV</a>
+      </form>
+    </div>
+    <div sec:authorize="!hasRole('TEACHER')">
+      <form method="get" action="/marksheets" class="mb-4 d-flex">
+        <input type="text" name="search" class="form-control me-2" placeholder="Search by name or roll number...">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a href="/marksheets/export" class="btn btn-success ms-2">Export to CSV</a>
+      </form>
+    </div>
 
     <table id="marksheetTable" class="table table-bordered table-striped">
       <thead class="table-dark">
@@ -102,9 +113,8 @@
     </div>
   </footer>
 
-  <!-- jQuery (required for DataTables) -->
+  <!-- jQuery and DataTables scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <!-- DataTables JS -->
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script>
