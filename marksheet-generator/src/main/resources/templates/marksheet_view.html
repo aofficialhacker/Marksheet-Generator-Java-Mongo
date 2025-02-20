@@ -5,32 +5,49 @@
   <meta charset="UTF-8">
   <title>Generated Marksheet</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/css/custom.css" rel="stylesheet"> <!-- Include jsPDF and html2canvas libraries for PDF generation -->
+  <link href="/css/custom.css" rel="stylesheet">
+  <!-- Include jsPDF and html2canvas libraries for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 
-<body> <!-- Navigation Bar -->
+<body>
+  <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid"> <a class="navbar-brand" href="/">Marksheet App</a>
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Marksheet App</a>
       <div class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto"> <!-- Navigation items for Teacher only -->
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link" href="/">Add Marksheet</a> </li>
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link" href="/marksheets">View All</a>
+        <ul class="navbar-nav ms-auto">
+          <!-- Navigation items for Teacher only -->
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
+            <a class="nav-link" href="/">Add Marksheet</a>
           </li>
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link" href="/dashboard">Dashboard</a>
-          </li> <!-- Conditional Logout Links -->
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link" href="/teacher/logout">Logout</a>
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
+            <a class="nav-link" href="/marksheets">View All</a>
           </li>
-          <li class="nav-item" sec:authorize="hasRole('STUDENT')"> <a class="nav-link" href="/logout">Logout</a> </li>
-          <!-- Dark Mode toggle available for all -->
-          <li class="nav-item"> <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button> </li>
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
+            <a class="nav-link" href="/dashboard">Dashboard</a>
+          </li>
+          <!-- Conditional Logout Links -->
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
+            <a class="nav-link" href="/teacher/logout">Logout</a>
+          </li>
+          <li class="nav-item" sec:authorize="hasRole('STUDENT')">
+            <a class="nav-link" href="/logout">Logout</a>
+          </li>
+          <!-- Dark Mode toggle available only for teachers -->
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
+            <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button>
+          </li>
         </ul>
       </div>
     </div>
-  </nav> <!-- Marksheet Content -->
+  </nav>
+
+  <!-- Marksheet Content -->
   <div class="container mt-4">
-    <h1 class="text-center mb-4">Marksheet</h1> <!-- The card below will be captured as an image for PDF generation -->
+    <h1 class="text-center mb-4">Marksheet</h1>
+    <!-- The card below will be captured as an image for PDF generation -->
     <div class="card" id="marksheetContent">
       <div class="card-body">
         <p><strong>Student Name:</strong> <span th:text="${marksheet.studentName}"></span></p>
@@ -38,8 +55,12 @@
         <p><strong>Class:</strong> <span th:text="${marksheet.className}"></span></p>
         <p><strong>Date of Birth:</strong> <span th:text="${marksheet.dob}"></span></p>
         <!-- Display profile picture if available -->
-        <div th:if="${marksheet.profilePicture != null}"> <img th:src="@{'/uploads/' + ${marksheet.profilePicture}}"
-            alt="Profile Picture" class="img-thumbnail mb-3" style="max-width: 150px;"> </div>
+        <!-- Display profile picture if available -->
+        <div th:if="${marksheet.profilePicture != null}" class="position-absolute top-0 end-0">
+          <img th:src="@{'/uploads/' + ${marksheet.profilePicture}}"
+               alt="Profile Picture" class="img-thumbnail" style="max-width: 150px;">
+        </div>
+
         <hr />
         <!-- Subjects Section -->
         <div th:if="${marksheet.className == '10th'}">
@@ -79,31 +100,127 @@
           </div>
         </div>
         <hr />
-
         <!-- Overall Results -->
         <p><strong>Total:</strong> <span th:text="${marksheet.total}"></span></p>
         <p><strong>Percentage:</strong> <span th:text="${marksheet.percentage}"></span>%</p>
         <p><strong>Grade:</strong> <span th:text="${marksheet.grade}"></span></p>
       </div>
     </div>
-
     <div class="text-center mt-4">
       <!-- Download PDF button -->
       <button class="btn btn-secondary me-2" onclick="downloadPDF()">Download PDF</button>
       <!-- "Generate Another" button is only for teachers -->
       <span sec:authorize="hasRole('TEACHER')">
-        <a href="/" class="btn btn-primary">Generate Another</a>
+        <a th:href="@{/teacher/addMarksheet}" class="btn btn-primary">Generate Another</a>
       </span>
     </div>
   </div>
+
   <footer>
     <div class="container">
       <p>&copy; 2025 Marksheet Generator. All rights reserved.</p>
     </div>
-  </footer> <!-- JavaScript for generating PDF using html2canvas and jsPDF -->
-  <script> function downloadPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4'); html2canvas(document.getElementById("marksheetContent")).then(function (canvas) { const imgData = canvas.toDataURL('image/png'); const imgProps = doc.getImageProperties(imgData); const pdfWidth = doc.internal.pageSize.getWidth(); const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width; doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); doc.save("marksheet.pdf"); }); } </script>
-  <!-- Dark Mode Toggle Script -->
-  <script> document.getElementById("themeToggle").addEventListener("click", function () { document.body.classList.toggle("dark-mode"); document.querySelectorAll(".navbar").forEach(function (navbar) { navbar.classList.toggle("dark-mode"); }); this.textContent = document.body.classList.contains("dark-mode") ? "Light Mode" : "Dark Mode"; }); </script>
+  </footer>
+
+  <!-- JavaScript for generating PDF using html2canvas and jsPDF -->
+  <script>
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      // Create a jsPDF instance in points (pt) for finer control on an A4 page
+      const doc = new jsPDF('p', 'pt', 'a4');
+
+      // Define margins and page dimensions
+      const margin = 40;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // --- Header ---
+      // (Optional) If you have a university logo, you can add it here:
+      // doc.addImage('logo_url', 'PNG', margin, margin, 60, 60);
+
+      // University name, department, and marksheet title
+      doc.setFont("times", "bold");
+      doc.setFontSize(24);
+      doc.text("XYZ University", pageWidth / 2, margin + 20, { align: "center" });
+      doc.setFontSize(18);
+      doc.text("Department of Mumbai/Pune", pageWidth / 2, margin + 45, { align: "center" });
+      doc.setFontSize(16);
+      doc.text("University Marksheet", pageWidth / 2, margin + 70, { align: "center" });
+
+      // Draw a horizontal line under the header
+      doc.setLineWidth(1);
+      doc.line(margin, margin + 80, pageWidth - margin, margin + 80);
+
+      // --- Capture Content ---
+      // Use html2canvas with increased scale for higher resolution
+      html2canvas(document.getElementById("marksheetContent"), { scale: 2 }).then(function (canvas) {
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps = doc.getImageProperties(imgData);
+        const availableWidth = pageWidth - margin * 2;
+        const imgWidth = availableWidth;
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+        // Position the image below the header
+        const startY = margin + 90;
+        doc.addImage(imgData, 'PNG', margin, startY, imgWidth, imgHeight);
+
+        // Draw a subtle border around the captured marksheet content
+        doc.setLineWidth(0.5);
+        doc.rect(margin, startY, imgWidth, imgHeight);
+
+        // --- Footer ---
+        doc.setFontSize(10);
+        doc.text("Generated on: " + new Date().toLocaleString(), pageWidth / 2, pageHeight - margin, { align: "center" });
+
+        // Save the PDF
+        doc.save("marksheet.pdf");
+      });
+    }
+  </script>
+
+
+
+  <!-- Dark Mode Script (Teacher-specific only) -->
+  <script th:inline="javascript">
+    var teacherUsername = /*[[${#authorization.expression('hasRole("TEACHER")') ? #authentication.name : ""}]]*/ "";
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (teacherUsername !== "") {
+        var darkModeKey = "darkMode_" + teacherUsername;
+        if (localStorage.getItem(darkModeKey) === "enabled") {
+          document.body.classList.add("dark-mode");
+          document.querySelectorAll(".navbar").forEach(function (navbar) {
+            navbar.classList.add("dark-mode");
+          });
+          document.getElementById("themeToggle").textContent = "Light Mode";
+        } else {
+          document.getElementById("themeToggle").textContent = "Dark Mode";
+        }
+      }
+    });
+    if (teacherUsername !== "") {
+      document.getElementById("themeToggle").addEventListener("click", function () {
+        var darkModeKey = "darkMode_" + teacherUsername;
+        if (document.body.classList.contains("dark-mode")) {
+          document.body.classList.remove("dark-mode");
+          document.querySelectorAll(".navbar").forEach(function (navbar) {
+            navbar.classList.remove("dark-mode");
+          });
+          localStorage.setItem(darkModeKey, "disabled");
+          this.textContent = "Dark Mode";
+        } else {
+          document.body.classList.add("dark-mode");
+          document.querySelectorAll(".navbar").forEach(function (navbar) {
+            navbar.classList.add("dark-mode");
+          });
+          localStorage.setItem(darkModeKey, "enabled");
+          this.textContent = "Light Mode";
+        }
+      });
+    }
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
