@@ -151,11 +151,36 @@ public class MarksheetController {
     }
 
     @GetMapping("/marksheets/export")
-    public void exportCSV(HttpServletResponse response) throws IOException {
+    public void exportCSV(HttpServletResponse response, Authentication authentication) throws IOException {
         response.setContentType("text/csv");
         String filename = "marksheets.csv";
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-        List<Marksheet> marksheets = marksheetService.getAllMarksheets();
+
+        List<Marksheet> marksheets;
+        // If the user is a teacher, filter by assigned class
+        if (authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"))) {
+            String teacherUsername = authentication.getName();
+            String assignedClass;
+            switch (teacherUsername) {
+                case "teacher1":
+                    assignedClass = "10th";
+                    break;
+                case "teacher2":
+                    assignedClass = "11th";
+                    break;
+                case "teacher3":
+                    assignedClass = "12th";
+                    break;
+                default:
+                    assignedClass = "";
+            }
+            marksheets = marksheetService.getMarksheetsByClass(assignedClass);
+        } else {
+            // Otherwise, export all marksheets
+            marksheets = marksheetService.getAllMarksheets();
+        }
+
         PrintWriter writer = response.getWriter();
         writer.println("Student Name,Roll Number,Class,Date of Birth,Math,Science,English,Total,Percentage,Grade");
         for (Marksheet m : marksheets) {
