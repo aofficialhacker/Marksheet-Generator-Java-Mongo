@@ -1,55 +1,36 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
   <meta charset="UTF-8">
   <title>Generated Marksheet</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/css/custom.css" rel="stylesheet">
-  <!-- Include jsPDF and html2canvas libraries for PDF generation -->
+  <link href="/css/custom.css" rel="stylesheet"> <!-- Include jsPDF and html2canvas libraries for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
-<body>
-  <!-- Navigation Bar -->
+
+<body> <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="/">Marksheet App</a>
+    <div class="container-fluid"> <a class="navbar-brand" href="/">Marksheet App</a>
       <div class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto">
-          <!-- Navigation items for Teacher only -->
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" href="/">Add Marksheet</a>
+        <ul class="navbar-nav ms-auto"> <!-- Navigation items for Teacher only -->
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link" href="/">Add Marksheet</a> </li>
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link" href="/marksheets">View All</a>
           </li>
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" href="/marksheets">View All</a>
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link" href="/dashboard">Dashboard</a>
+          </li> <!-- Conditional Logout Links -->
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link" href="/teacher/logout">Logout</a>
           </li>
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" href="/dashboard">Dashboard</a>
-          </li>
-          
-          <!-- Conditional Logout Link -->
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" href="/teacher/logout">Logout</a>
-          </li>
-          <li class="nav-item" sec:authorize="hasRole('STUDENT')">
-            <a class="nav-link" href="/logout">Logout</a>
-          </li>
-
+          <li class="nav-item" sec:authorize="hasRole('STUDENT')"> <a class="nav-link" href="/logout">Logout</a> </li>
           <!-- Dark Mode toggle available for all -->
-          <li class="nav-item">
-            <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button>
-          </li>
-
+          <li class="nav-item"> <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button> </li>
         </ul>
       </div>
     </div>
-  </nav>
-
-  <!-- Marksheet Content -->
+  </nav> <!-- Marksheet Content -->
   <div class="container mt-4">
-    <h1 class="text-center mb-4">Marksheet</h1>
-    <!-- The card below will be captured as an image for PDF generation -->
+    <h1 class="text-center mb-4">Marksheet</h1> <!-- The card below will be captured as an image for PDF generation -->
     <div class="card" id="marksheetContent">
       <div class="card-body">
         <p><strong>Student Name:</strong> <span th:text="${marksheet.studentName}"></span></p>
@@ -57,17 +38,49 @@
         <p><strong>Class:</strong> <span th:text="${marksheet.className}"></span></p>
         <p><strong>Date of Birth:</strong> <span th:text="${marksheet.dob}"></span></p>
         <!-- Display profile picture if available -->
-        <div th:if="${marksheet.profilePicture != null}">
-          <img th:src="@{'/uploads/' + ${marksheet.profilePicture}}"
-               alt="Profile Picture"
-               class="img-thumbnail mb-3"
-               style="max-width: 150px;">
+        <div th:if="${marksheet.profilePicture != null}"> <img th:src="@{'/uploads/' + ${marksheet.profilePicture}}"
+            alt="Profile Picture" class="img-thumbnail mb-3" style="max-width: 150px;"> </div>
+        <hr />
+        <!-- Subjects Section -->
+        <div th:if="${marksheet.className == '10th'}">
+          <h4>Subjects (10th Class)</h4>
+          <p><strong>Math:</strong> <span th:text="${marksheet.math}"></span></p>
+          <p><strong>Science:</strong> <span th:text="${marksheet.science}"></span></p>
+          <p><strong>English:</strong> <span th:text="${marksheet.english}"></span></p>
+          <p><strong>Hindi:</strong> <span th:text="${marksheet.hindi}"></span></p>
+          <p><strong>Marathi:</strong> <span th:text="${marksheet.marathi}"></span></p>
+          <p><strong>History:</strong> <span th:text="${marksheet.history}"></span></p>
+          <p><strong>Geography:</strong> <span th:text="${marksheet.geography}"></span></p>
         </div>
-        <hr>
-        <p><strong>Math:</strong> <span th:text="${marksheet.math}"></span></p>
-        <p><strong>Science:</strong> <span th:text="${marksheet.science}"></span></p>
-        <p><strong>English:</strong> <span th:text="${marksheet.english}"></span></p>
-        <hr>
+        <div th:if="${marksheet.className == '11th' or marksheet.className == '12th'}">
+          <h4>Subjects (11th/12th Class)</h4>
+          <div th:switch="${marksheet.stream}">
+            <div th:case="'Science'">
+              <p><strong>Math:</strong> <span th:text="${marksheet.math}"></span></p>
+              <p><strong>Physics:</strong> <span th:text="${marksheet.physics}"></span></p>
+              <p><strong>Chemistry:</strong> <span th:text="${marksheet.chemistry}"></span></p>
+              <p><strong>Biology:</strong> <span th:text="${marksheet.biology}"></span></p>
+            </div>
+            <div th:case="'Commerce'">
+              <p><strong>Math:</strong> <span th:text="${marksheet.math}"></span></p>
+              <p><strong>Economics:</strong> <span th:text="${marksheet.economics}"></span></p>
+              <p><strong>Business Studies:</strong> <span th:text="${marksheet.businessStudies}"></span></p>
+              <p><strong>Accountancy:</strong> <span th:text="${marksheet.accountancy}"></span></p>
+            </div>
+            <div th:case="'Arts'">
+              <p><strong>History:</strong> <span th:text="${marksheet.history}"></span></p>
+              <p><strong>Political Science:</strong> <span th:text="${marksheet.politicalScience}"></span></p>
+              <p><strong>Sociology:</strong> <span th:text="${marksheet.sociology}"></span></p>
+              <p><strong>Geography:</strong> <span th:text="${marksheet.geography}"></span></p>
+            </div>
+            <div th:case="*">
+              <p>Stream not specified.</p>
+            </div>
+          </div>
+        </div>
+        <hr />
+
+        <!-- Overall Results -->
         <p><strong>Total:</strong> <span th:text="${marksheet.total}"></span></p>
         <p><strong>Percentage:</strong> <span th:text="${marksheet.percentage}"></span>%</p>
         <p><strong>Grade:</strong> <span th:text="${marksheet.grade}"></span></p>
@@ -83,40 +96,15 @@
       </span>
     </div>
   </div>
-
   <footer>
     <div class="container">
       <p>&copy; 2025 Marksheet Generator. All rights reserved.</p>
     </div>
-  </footer>
-
-  <!-- JavaScript for generating PDF using html2canvas and jsPDF -->
-  <script>
-    function downloadPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('p', 'mm', 'a4');
-      html2canvas(document.getElementById("marksheetContent")).then(function(canvas) {
-        const imgData = canvas.toDataURL('image/png');
-        const imgProps = doc.getImageProperties(imgData);
-        const pdfWidth = doc.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        doc.save("marksheet.pdf");
-      });
-    }
-  </script>
-
+  </footer> <!-- JavaScript for generating PDF using html2canvas and jsPDF -->
+  <script> function downloadPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4'); html2canvas(document.getElementById("marksheetContent")).then(function (canvas) { const imgData = canvas.toDataURL('image/png'); const imgProps = doc.getImageProperties(imgData); const pdfWidth = doc.internal.pageSize.getWidth(); const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width; doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); doc.save("marksheet.pdf"); }); } </script>
   <!-- Dark Mode Toggle Script -->
-  <script>
-    document.getElementById("themeToggle").addEventListener("click", function() {
-      document.body.classList.toggle("dark-mode");
-      document.querySelectorAll(".navbar").forEach(function(navbar) {
-        navbar.classList.toggle("dark-mode");
-      });
-      this.textContent = document.body.classList.contains("dark-mode") ? "Light Mode" : "Dark Mode";
-    });
-  </script>
-
+  <script> document.getElementById("themeToggle").addEventListener("click", function () { document.body.classList.toggle("dark-mode"); document.querySelectorAll(".navbar").forEach(function (navbar) { navbar.classList.toggle("dark-mode"); }); this.textContent = document.body.classList.contains("dark-mode") ? "Light Mode" : "Dark Mode"; }); </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

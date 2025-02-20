@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" 
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
   <meta charset="UTF-8">
   <title>Marksheet Generator</title>
@@ -8,63 +8,49 @@
   <link href="/css/custom.css" rel="stylesheet">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-<body>
-  <!-- Navigation Bar -->
+
+<body> <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand" th:href="@{/}">Marksheet App</a>
+    <div class="container-fluid"> <a class="navbar-brand" th:href="@{/}">Marksheet App</a>
       <div class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto">
-          <!-- Teacher-specific links -->
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" th:href="@{/teacher/addMarksheet}">Add Marksheet</a>
+        <ul class="navbar-nav ms-auto"> <!-- Teacher-specific links -->
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link"
+              th:href="@{/teacher/addMarksheet}">Add Marksheet</a> </li>
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link" th:href="@{/marksheets}">View
+              All</a> </li>
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link"
+              th:href="@{/dashboard}">Dashboard</a> </li>
+          <li class="nav-item" sec:authorize="hasRole('TEACHER')"> <a class="nav-link"
+              th:href="@{/teacher/logout}">Logout</a> </li> <!-- For non-teacher users (if applicable) -->
+          <li class="nav-item" sec:authorize="!hasRole('TEACHER')"> <a class="nav-link" th:href="@{/}">Add Marksheet</a>
           </li>
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" th:href="@{/marksheets}">View All</a>
+          <li class="nav-item" sec:authorize="!hasRole('TEACHER')"> <a class="nav-link" th:href="@{/marksheets}">View
+              All</a> </li>
+          <li class="nav-item" sec:authorize="!hasRole('TEACHER')"> <a class="nav-link"
+              th:href="@{/dashboard}">Dashboard</a> </li>
+          <li class="nav-item" sec:authorize="!hasRole('TEACHER')"> <a class="nav-link" th:href="@{/logout}">Logout</a>
           </li>
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
-          </li>
-          <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" th:href="@{/teacher/logout}">Logout</a>
-          </li>
-          <!-- For non-teacher users (if applicable) -->
-          <li class="nav-item" sec:authorize="!hasRole('TEACHER')">
-            <a class="nav-link" th:href="@{/}">Add Marksheet</a>
-          </li>
-          <li class="nav-item" sec:authorize="!hasRole('TEACHER')">
-            <a class="nav-link" th:href="@{/marksheets}">View All</a>
-          </li>
-          <li class="nav-item" sec:authorize="!hasRole('TEACHER')">
-            <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
-          </li>
-          <li class="nav-item" sec:authorize="!hasRole('TEACHER')">
-            <a class="nav-link" th:href="@{/logout}">Logout</a>
-          </li>
-          <li class="nav-item">
-            <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button>
-          </li>
+          <li class="nav-item"> <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button> </li>
         </ul>
       </div>
     </div>
-  </nav>
-
-  <!-- Main Container -->
+  </nav> <!-- Main Container -->
   <div class="container mt-4">
     <h1 class="mb-4 text-center">Enter / Edit Student Details</h1>
     <!-- IMPORTANT: enctype="multipart/form-data" is required for file uploads -->
     <form th:action="@{/generate}" th:object="${marksheet}" method="post" enctype="multipart/form-data">
+      <!-- Hidden field to preserve id during editing --> <input type="hidden" th:field="*{id}" />
       <div th:if="${#fields.hasErrors('*')}" class="alert alert-danger">
         <ul>
           <li th:each="err : ${#fields.errors('*')}" th:text="${err}"></li>
         </ul>
       </div>
-      
+
       <div class="mb-3">
         <label class="form-label">Student Name</label>
         <input type="text" class="form-control" th:field="*{studentName}" placeholder="Enter name" required>
       </div>
-      
+
       <div class="row mb-3">
         <div class="col">
           <label class="form-label">Roll Number</label>
@@ -80,13 +66,13 @@
           <input type="date" class="form-control" th:field="*{dob}" required>
         </div>
       </div>
-      
+
       <!-- Profile Picture Upload -->
       <div class="mb-3">
         <label class="form-label">Profile Picture</label>
         <input type="file" class="form-control" name="profilePictureFile">
       </div>
-      
+
       <!-- Conditional Subjects Section -->
       <!-- For 10th Class -->
       <div th:if="${marksheet.className == '10th'}">
@@ -124,77 +110,66 @@
           </div>
         </div>
       </div>
-      
+
       <!-- For 11th and 12th Class -->
       <div th:if="${marksheet.className == '11th' or marksheet.className == '12th'}">
         <h4>Subjects for 11th/12th Class</h4>
-        <div class="mb-3">
-          <label class="form-label">Stream</label>
-          <select class="form-select" th:field="*{stream}" id="streamSelect" required>
+        <div class="mb-3"> <label class="form-label">Stream</label> <select class="form-select" th:field="*{stream}"
+            id="streamSelect" required>
             <option value="">Select Stream</option>
-            <option value="Science">Science</option>
-            <option value="Commerce">Commerce</option>
-            <option value="Arts">Arts</option>
-          </select>
+            <option value="Science" th:selected="${marksheet.stream=='Science'}">Science</option>
+            <option value="Commerce" th:selected="${marksheet.stream=='Commerce'}">Commerce</option>
+            <option value="Arts" th:selected="${marksheet.stream=='Arts'}">Arts</option>
+          </select> </div> <!-- Stream-specific subjects -->
+        <div id="streamSubjects">
+          <div th:if="${marksheet.stream=='Science'}">
+            <div class="row mb-3">
+              <div class="col"> <label class="form-label">Physics</label> <input type="number" class="form-control"
+                  th:field="*{physics}" required> </div>
+              <div class="col"> <label class="form-label">Chemistry</label> <input type="number" class="form-control"
+                  th:field="*{chemistry}" required> </div>
+              <div class="col"> <label class="form-label">Mathematics</label> <input type="number" class="form-control"
+                  th:field="*{math}" required> </div>
+              <div class="col"> <label class="form-label">Biology</label> <input type="number" class="form-control"
+                  th:field="*{biology}" required> </div>
+            </div>
+          </div>
+          <div th:if="${marksheet.stream=='Commerce'}">
+            <div class="row mb-3">
+              <div class="col"> <label class="form-label">Economics</label> <input type="number" class="form-control"
+                  th:field="*{economics}" required> </div>
+              <div class="col"> <label class="form-label">Business Studies</label> <input type="number"
+                  class="form-control" th:field="*{businessStudies}" required> </div>
+              <div class="col"> <label class="form-label">Accountancy</label> <input type="number" class="form-control"
+                  th:field="*{accountancy}" required> </div>
+              <div class="col"> <label class="form-label">Mathematics</label> <input type="number" class="form-control"
+                  th:field="*{math}" required> </div>
+            </div>
+          </div>
+          <div th:if="${marksheet.stream=='Arts'}">
+            <div class="row mb-3">
+              <div class="col"> <label class="form-label">History</label> <input type="number" class="form-control"
+                  th:field="*{history}" required> </div>
+              <div class="col"> <label class="form-label">Political Science</label> <input type="number"
+                  class="form-control" th:field="*{politicalScience}" required> </div>
+              <div class="col"> <label class="form-label">Sociology</label> <input type="number" class="form-control"
+                  th:field="*{sociology}" required> </div>
+              <div class="col"> <label class="form-label">Geography</label> <input type="number" class="form-control"
+                  th:field="*{geography}" required> </div>
+            </div>
+          </div>
         </div>
-        <!-- Container for stream-specific subjects -->
-        <div id="streamSubjects"></div>
       </div>
-      
+
       <div class="d-grid">
         <button type="submit" class="btn btn-primary btn-lg">Save / Generate Marksheet</button>
       </div>
     </form>
-  </div>
-
-  <!-- Theme Toggle Script -->
-  <script>
-    document.getElementById("themeToggle").addEventListener("click", function() {
-      document.body.classList.toggle("dark-mode");
-      document.querySelectorAll(".navbar").forEach(function(navbar) {
-        navbar.classList.toggle("dark-mode");
-      });
-      if(document.body.classList.contains("dark-mode")){
-        this.textContent = "Light Mode";
-      } else {
-        this.textContent = "Dark Mode";
-      }
-    });
-  </script>
-
+  </div> <!-- Theme Toggle Script -->
+  <script> document.getElementById("themeToggle").addEventListener("click", function () { document.body.classList.toggle("dark-mode"); document.querySelectorAll(".navbar").forEach(function (navbar) { navbar.classList.toggle("dark-mode"); }); if (document.body.classList.contains("dark-mode")) { this.textContent = "Light Mode"; } else { this.textContent = "Dark Mode"; } }); </script>
   <!-- jQuery for stream subjects dynamic rendering -->
-  <script>
-    $(document).ready(function(){
-      $('#streamSelect').change(function(){
-        var stream = $(this).val();
-        var subjectsHtml = '';
-        if(stream === 'Science'){
-          subjectsHtml += '<div class="row mb-3">';
-          subjectsHtml += '<div class="col"><label class="form-label">Physics</label><input type="number" class="form-control" name="physics" required></div>';
-          subjectsHtml += '<div class="col"><label class="form-label">Chemistry</label><input type="number" class="form-control" name="chemistry" required></div>';
-          subjectsHtml += '<div class="col"><label class="form-label">Mathematics</label><input type="number" class="form-control" name="math" required></div>';
-          subjectsHtml += '<div class="col"><label class="form-label">Biology</label><input type="number" class="form-control" name="biology" required></div>';
-          subjectsHtml += '</div>';
-        } else if(stream === 'Commerce'){
-          subjectsHtml += '<div class="row mb-3">';
-          subjectsHtml += '<div class="col"><label class="form-label">Economics</label><input type="number" class="form-control" name="economics" required></div>';
-          subjectsHtml += '<div class="col"><label class="form-label">Business Studies</label><input type="number" class="form-control" name="businessStudies" required></div>';
-          subjectsHtml += '<div class="col"><label class="form-label">Accountancy</label><input type="number" class="form-control" name="accountancy" required></div>';
-          subjectsHtml += '<div class="col"><label class="form-label">Mathematics</label><input type="number" class="form-control" name="math" required></div>';
-          subjectsHtml += '</div>';
-        } else if(stream === 'Arts'){
-          subjectsHtml += '<div class="row mb-3">';
-          subjectsHtml += '<div class="col"><label class="form-label">History</label><input type="number" class="form-control" name="history" required></div>';
-          subjectsHtml += '<div class="col"><label class="form-label">Political Science</label><input type="number" class="form-control" name="politicalScience" required></div>';
-          subjectsHtml += '<div class="col"><label class="form-label">Sociology</label><input type="number" class="form-control" name="sociology" required></div>';
-          subjectsHtml += '<div class="col"><label class="form-label">Geography</label><input type="number" class="form-control" name="geography" required></div>';
-          subjectsHtml += '</div>';
-        }
-        $('#streamSubjects').html(subjectsHtml);
-      });
-    });
-  </script>
-
+  <script> $(document).ready(function () { $('#streamSelect').change(function () { var stream = $(this).val(); var subjectsHtml = ''; if (stream === 'Science') { subjectsHtml += '<div class="row mb-3">'; subjectsHtml += '<div class="col"><label class="form-label">Physics</label><input type="number" class="form-control" name="physics" required></div>'; subjectsHtml += '<div class="col"><label class="form-label">Chemistry</label><input type="number" class="form-control" name="chemistry" required></div>'; subjectsHtml += '<div class="col"><label class="form-label">Mathematics</label><input type="number" class="form-control" name="math" required></div>'; subjectsHtml += '<div class="col"><label class="form-label">Biology</label><input type="number" class="form-control" name="biology" required></div>'; subjectsHtml += '</div>'; } else if (stream === 'Commerce') { subjectsHtml += '<div class="row mb-3">'; subjectsHtml += '<div class="col"><label class="form-label">Economics</label><input type="number" class="form-control" name="economics" required></div>'; subjectsHtml += '<div class="col"><label class="form-label">Business Studies</label><input type="number" class="form-control" name="businessStudies" required></div>'; subjectsHtml += '<div class="col"><label class="form-label">Accountancy</label><input type="number" class="form-control" name="accountancy" required></div>'; subjectsHtml += '<div class="col"><label class="form-label">Mathematics</label><input type="number" class="form-control" name="math" required></div>'; subjectsHtml += '</div>'; } else if (stream === 'Arts') { subjectsHtml += '<div class="row mb-3">'; subjectsHtml += '<div class="col"><label class="form-label">History</label><input type="number" class="form-control" name="history" required></div>'; subjectsHtml += '<div class="col"><label class="form-label">Political Science</label><input type="number" class="form-control" name="politicalScience" required></div>'; subjectsHtml += '<div class="col"><label class="form-label">Sociology</label><input type="number" class="form-control" name="sociology" required></div>'; subjectsHtml += '<div class="col"><label class="form-label">Geography</label><input type="number" class="form-control" name="geography" required></div>'; subjectsHtml += '</div>'; } $('#streamSubjects').html(subjectsHtml); }); }); </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

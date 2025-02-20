@@ -2,21 +2,26 @@ package com.example.marksheetgenerator.service;
 
 import com.example.marksheetgenerator.model.Marksheet;
 import com.example.marksheetgenerator.repository.MarksheetRepository;
+import com.example.marksheetgenerator.repository.StudentUserRepository;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class MarksheetService {
-
     private final MarksheetRepository marksheetRepository;
+    private final StudentUserRepository studentUserRepository;
 
-    public MarksheetService(MarksheetRepository marksheetRepository) {
+    public MarksheetService(MarksheetRepository marksheetRepository, StudentUserRepository studentUserRepository) {
         this.marksheetRepository = marksheetRepository;
+        this.studentUserRepository = studentUserRepository;
     }
 
     public Marksheet generateAndSaveMarksheet(Marksheet marksheet) {
         marksheet.calculateResults();
+        if (marksheet.getId() != null && marksheet.getId().trim().isEmpty()) {
+            marksheet.setId(null);
+        }
         return marksheetRepository.save(marksheet);
     }
 
@@ -38,12 +43,58 @@ public class MarksheetService {
     }
 
     public void deleteMarksheetById(String id) {
-        marksheetRepository.deleteById(id);
+        Optional<Marksheet> marksheetOptional = marksheetRepository.findById(id);
+        if (marksheetOptional.isPresent()) {
+            Marksheet marksheet = marksheetOptional.get();
+            String rollNumber = marksheet.getRollNumber();
+            // Delete marksheet from the marksheets collection
+            marksheetRepository.deleteById(id);
+            // Delete corresponding student user from student_users collection if exists
+            if (studentUserRepository.existsById(rollNumber)) {
+                studentUserRepository.deleteById(rollNumber);
+            }
+        } else {
+            throw new RuntimeException("Marksheet not found with id: " + id);
+        }
     }
 
     // New method to get marksheets filtered by class name using our custom query.
     public List<Marksheet> getMarksheetsByClass(String className) {
         return marksheetRepository.findByClassNameIgnoreCase(className);
+    }
+
+    // New method to generate the next roll number based on teacher's username.
+    public String getNextRollNumber(String teacherUsername) {
+        String prefix;
+        if ("teacher1".equals(teacherUsername)) {
+            prefix = "1";
+        } else if ("teacher2".equals(teacherUsername)) {
+            prefix = "2";
+        } else if ("teacher3".equals(teacherUsername)) {
+            prefix = "3";
+        } else {
+            throw new IllegalArgumentException("Invalid teacher username: " + teacherUsername);
+        }
+        // Set the baseline: teacher1 -> 101, teacher2 -> 201, teacher3 -> 301.
+        int baseline = Integer.parseInt(prefix + "01");
+        int nextRoll = baseline;
+        // Retrieve all marksheets and update nextRoll if a marksheet exists with the
+        // same prefix.
+        List<Marksheet> marksheets = marksheetRepository.findAll();
+        for (Marksheet ms : marksheets) {
+            String roll = ms.getRollNumber();
+            if (roll != null && roll.startsWith(prefix)) {
+                try {
+                    int rollNum = Integer.parseInt(roll);
+                    if (rollNum >= nextRoll) {
+                        nextRoll = rollNum + 1;
+                    }
+                } catch (NumberFormatException e) {
+                    // Skip any roll numbers that are not valid integers.
+                }
+            }
+        }
+        return String.format("%03d", nextRoll);
     }
 
     public Map<String, Object> getDashboardData() {

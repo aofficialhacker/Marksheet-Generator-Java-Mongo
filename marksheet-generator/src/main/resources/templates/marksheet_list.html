@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <title>All Marksheets</title>
@@ -49,7 +48,7 @@
       </div>
     </div>
   </nav>
-
+  
   <div class="container mt-4">
     <h1 class="mb-4 text-center">All Generated Marksheets</h1>
     <!-- Teacher-specific search form -->
@@ -67,7 +66,6 @@
         <a href="/marksheets/export" class="btn btn-success ms-2">Export to CSV</a>
       </form>
     </div>
-
     <table id="marksheetTable" class="table table-bordered table-striped">
       <thead class="table-dark">
         <tr>
@@ -81,7 +79,7 @@
           <th>Total</th>
           <th>Percentage</th>
           <th>Grade</th>
-          <th style="width: 150px;">Actions</th>
+          <th style="width: 200px;">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -97,6 +95,8 @@
           <td th:text="${ms.percentage}"></td>
           <td th:text="${ms.grade}"></td>
           <td>
+            <!-- New View Button -->
+            <a th:href="@{/marksheets/view/{id}(id=${ms.id})}" class="btn btn-info btn-sm mb-1">View</a>
             <a th:href="@{/marksheets/edit/{id}(id=${ms.id})}" class="btn btn-warning btn-sm mb-1">Edit</a>
             <form th:action="@{/marksheets/delete/{id}(id=${ms.id})}" method="post" style="display:inline;">
               <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
@@ -106,31 +106,37 @@
       </tbody>
     </table>
   </div>
-
+  
   <footer>
     <div class="container">
       <p>&copy; 2025 Marksheet Generator. All rights reserved.</p>
     </div>
   </footer>
-
+  
   <!-- jQuery and DataTables scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script>
-    $(document).ready(function(){
-      $('#marksheetTable').DataTable();
+    $(document).ready(function () {
+      // Initialize DataTables with the search option disabled to remove the default search box
+      $('#marksheetTable').DataTable({
+        searching: false
+      });
     });
   </script>
+  
+  <!-- Theme Toggle Script -->
   <script>
-    document.getElementById("themeToggle").addEventListener("click", function() {
+    document.getElementById("themeToggle").addEventListener("click", function () {
       document.body.classList.toggle("dark-mode");
-      document.querySelectorAll(".navbar").forEach(function(navbar) {
+      document.querySelectorAll(".navbar").forEach(function (navbar) {
         navbar.classList.toggle("dark-mode");
       });
       this.textContent = document.body.classList.contains("dark-mode") ? "Light Mode" : "Dark Mode";
     });
   </script>
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

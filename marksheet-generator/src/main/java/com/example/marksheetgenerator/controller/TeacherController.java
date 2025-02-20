@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 @Controller
 public class TeacherController {
-
     private final MarksheetService marksheetService;
 
     public TeacherController(MarksheetService marksheetService) {
@@ -43,8 +42,11 @@ public class TeacherController {
                 assignedClass = "";
         }
         Marksheet marksheet = new Marksheet();
-        // Prepopulate the className based on the teacher.
+        // Prepopulate the class based on the teacher.
         marksheet.setClassName(assignedClass);
+        // Prepopulate the roll number based on the teacher's next available number.
+        String nextRollNo = marksheetService.getNextRollNumber(teacherUsername);
+        marksheet.setRollNumber(nextRollNo);
         model.addAttribute("marksheet", marksheet);
         return "marksheet_form";
     }

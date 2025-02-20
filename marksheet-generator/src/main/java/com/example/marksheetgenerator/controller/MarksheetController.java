@@ -173,4 +173,11 @@ public class MarksheetController {
         }
         writer.flush();
     }
+
+    @GetMapping("/marksheets/view/{id}")
+    public String viewMarksheet(@PathVariable String id, Model model) {
+        Marksheet marksheet = marksheetService.getMarksheetById(id);
+        model.addAttribute("marksheet", marksheet);
+        return "marksheet_view";
+    }
 }
