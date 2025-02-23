@@ -47,9 +47,7 @@ public class MarksheetService {
         if (marksheetOptional.isPresent()) {
             Marksheet marksheet = marksheetOptional.get();
             String rollNumber = marksheet.getRollNumber();
-            // Delete marksheet from the marksheets collection
             marksheetRepository.deleteById(id);
-            // Delete corresponding student user from student_users collection if exists
             if (studentUserRepository.existsById(rollNumber)) {
                 studentUserRepository.deleteById(rollNumber);
             }
@@ -58,12 +56,10 @@ public class MarksheetService {
         }
     }
 
-    // New method to get marksheets filtered by class name using our custom query.
     public List<Marksheet> getMarksheetsByClass(String className) {
         return marksheetRepository.findByClassNameIgnoreCase(className);
     }
 
-    // New method to generate the next roll number based on teacher's username.
     public String getNextRollNumber(String teacherUsername) {
         String prefix;
         if ("teacher1".equals(teacherUsername)) {
@@ -75,11 +71,8 @@ public class MarksheetService {
         } else {
             throw new IllegalArgumentException("Invalid teacher username: " + teacherUsername);
         }
-        // Set the baseline: teacher1 -> 101, teacher2 -> 201, teacher3 -> 301.
         int baseline = Integer.parseInt(prefix + "01");
         int nextRoll = baseline;
-        // Retrieve all marksheets and update nextRoll if a marksheet exists with the
-        // same prefix.
         List<Marksheet> marksheets = marksheetRepository.findAll();
         for (Marksheet ms : marksheets) {
             String roll = ms.getRollNumber();
@@ -90,56 +83,25 @@ public class MarksheetService {
                         nextRoll = rollNum + 1;
                     }
                 } catch (NumberFormatException e) {
-                    // Skip any roll numbers that are not valid integers.
+                    // Skip invalid roll numbers.
                 }
             }
         }
         return String.format("%03d", nextRoll);
     }
 
-    public Map<String, Object> getDashboardData() {
-        List<Marksheet> list = getAllMarksheets();
-        Map<String, Object> data = new HashMap<>();
-        data.put("totalStudents", list.size());
-
-        if (list.isEmpty()) {
-            data.put("avgMath", 0);
-            data.put("avgScience", 0);
-            data.put("avgEnglish", 0);
-            data.put("topPerformer", "N/A");
-            data.put("lowestPerformer", "N/A");
-            data.put("passPercentage", "0.00");
-            data.put("failPercentage", "0.00");
-            data.put("recentMarksheets", new ArrayList<Marksheet>());
-            return data;
+    // New method: compute grade distribution based on a provided list
+    public Map<String, Integer> getGradeDistribution(List<Marksheet> list) {
+        Map<String, Integer> distribution = new HashMap<>();
+        distribution.put("A", 0);
+        distribution.put("B", 0);
+        distribution.put("C", 0);
+        distribution.put("D", 0);
+        for (Marksheet m : list) {
+            String grade = m.getGrade();
+            distribution.put(grade, distribution.getOrDefault(grade, 0) + 1);
         }
-
-        double totalMath = list.stream().mapToInt(Marksheet::getMath).sum();
-        double totalScience = list.stream().mapToInt(Marksheet::getScience).sum();
-        double totalEnglish = list.stream().mapToInt(Marksheet::getEnglish).sum();
-
-        data.put("avgMath", totalMath / list.size());
-        data.put("avgScience", totalScience / list.size());
-        data.put("avgEnglish", totalEnglish / list.size());
-
-        Marksheet top = list.stream().max(Comparator.comparingInt(Marksheet::getTotal)).orElse(null);
-        Marksheet low = list.stream().min(Comparator.comparingInt(Marksheet::getTotal)).orElse(null);
-        data.put("topPerformer", top != null ? top.getStudentName() + " (" + top.getTotal() + ")" : "N/A");
-        data.put("lowestPerformer", low != null ? low.getStudentName() + " (" + low.getTotal() + ")" : "N/A");
-
-        long passCount = list.stream().filter(m -> !"D".equalsIgnoreCase(m.getGrade())).count();
-        double passPercentage = ((double) passCount / list.size()) * 100;
-        data.put("passPercentage", String.format("%.2f", passPercentage));
-        data.put("failPercentage", String.format("%.2f", 100 - passPercentage));
-
-        List<Marksheet> recent = new ArrayList<>(list);
-        Collections.reverse(recent);
-        if (recent.size() > 5) {
-            recent = recent.subList(0, 5);
-        }
-        data.put("recentMarksheets", recent);
-
-        return data;
+        return distribution;
     }
 
     public Map<String, Object> computeDashboardData(List<Marksheet> list) {
@@ -154,6 +116,10 @@ public class MarksheetService {
             data.put("passPercentage", "0.00");
             data.put("failPercentage", "0.00");
             data.put("recentMarksheets", new ArrayList<Marksheet>());
+            data.put("gradeA", 0);
+            data.put("gradeB", 0);
+            data.put("gradeC", 0);
+            data.put("gradeD", 0);
             return data;
         }
         double totalMath = list.stream().mapToInt(Marksheet::getMath).sum();
@@ -164,8 +130,27 @@ public class MarksheetService {
         data.put("avgEnglish", totalEnglish / list.size());
         Marksheet top = list.stream().max(Comparator.comparingInt(Marksheet::getTotal)).orElse(null);
         Marksheet low = list.stream().min(Comparator.comparingInt(Marksheet::getTotal)).orElse(null);
-        data.put("topPerformer", top != null ? top.getStudentName() + " (" + top.getTotal() + ")" : "N/A");
-        data.put("lowestPerformer", low != null ? low.getStudentName() + " (" + low.getTotal() + ")" : "N/A");
+
+        // Compute top performers (handle ties)
+        int maxTotal = list.stream().mapToInt(Marksheet::getTotal).max().orElse(0);
+        List<Marksheet> topPerformers = list.stream()
+                .filter(m -> m.getTotal() == maxTotal)
+                .collect(Collectors.toList());
+        String topStr = topPerformers.stream()
+                .map(m -> m.getStudentName() + " (" + m.getTotal() + ")")
+                .collect(Collectors.joining(", "));
+        data.put("topPerformer", topStr.isEmpty() ? "N/A" : topStr);
+
+        // Compute lowest performers (handle ties)
+        int minTotal = list.stream().mapToInt(Marksheet::getTotal).min().orElse(0);
+        List<Marksheet> lowPerformers = list.stream()
+                .filter(m -> m.getTotal() == minTotal)
+                .collect(Collectors.toList());
+        String lowStr = lowPerformers.stream()
+                .map(m -> m.getStudentName() + " (" + m.getTotal() + ")")
+                .collect(Collectors.joining(", "));
+        data.put("lowestPerformer", lowStr.isEmpty() ? "N/A" : lowStr);
+
         long passCount = list.stream().filter(m -> !"D".equalsIgnoreCase(m.getGrade())).count();
         double passPercentage = ((double) passCount / list.size()) * 100;
         data.put("passPercentage", String.format("%.2f", passPercentage));
@@ -176,6 +161,20 @@ public class MarksheetService {
             recent = recent.subList(0, 5);
         }
         data.put("recentMarksheets", recent);
+
+        // Compute grade distribution for the provided list (filtered by class for
+        // teacher)
+        Map<String, Integer> gradeDist = getGradeDistribution(list);
+        data.put("gradeA", gradeDist.get("A"));
+        data.put("gradeB", gradeDist.get("B"));
+        data.put("gradeC", gradeDist.get("C"));
+        data.put("gradeD", gradeDist.get("D"));
+
         return data;
+    }
+
+    public Map<String, Object> getDashboardData() {
+        List<Marksheet> list = getAllMarksheets();
+        return computeDashboardData(list);
     }
 }

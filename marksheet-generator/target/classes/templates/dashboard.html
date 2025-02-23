@@ -5,14 +5,50 @@
     <meta charset="UTF-8">
     <title>Dashboard - Marksheet App</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Include Chart.js for the trend chart -->
+    <!-- Include Chart.js for the bar chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        background-color: #f4f7f9;
+        font-family: 'Segoe UI', sans-serif;
+      }
+      .card-metric {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+      .card-metric .card-body {
+        text-align: center;
+      }
+      .card-metric h5 {
+        margin-bottom: 15px;
+        font-size: 1.25rem;
+      }
+      .card-metric p {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 0;
+      }
+      .chart-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-bottom: 40px;
+      }
+      footer {
+        background: #212529;
+        color: #fff;
+        padding: 15px 0;
+        margin-top: 40px;
+      }
+    </style>
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-          <a class="navbar-brand" href="/">Marksheet App</a>
+          <a class="navbar-brand" href="/">Marksheet-Generator</a>
           <div class="collapse navbar-collapse">
             <ul class="navbar-nav ms-auto">
               <!-- Teacher-specific links -->
@@ -28,39 +64,34 @@
               <li class="nav-item" sec:authorize="hasRole('TEACHER')">
                 <a class="nav-link" th:href="@{/teacher/logout}">Logout</a>
               </li>
-              <!-- For non-teachers, you can have different links if needed -->
             </ul>
           </div>
         </div>
-      </nav>
+    </nav>
       
-    
-    <div class="container mt-4">
-        <h1 class="text-center mb-4">Dashboard</h1>
+    <div class="container my-5">
+        <h1 class="text-center mb-5">Dashboard</h1>
         
-        <!-- Key Metrics Cards -->
+        <!-- Metrics Cards -->
         <div class="row mb-4">
-            <!-- Total Students -->
             <div class="col-md-4 mb-3">
-                <div class="card text-white bg-primary">
+                <div class="card card-metric bg-primary text-white">
                     <div class="card-body">
                         <h5 class="card-title">Total Students</h5>
                         <p class="card-text" th:text="${stats['totalStudents'] ?: 0}">0</p>
                     </div>
                 </div>
             </div>
-            <!-- Top Performer -->
             <div class="col-md-4 mb-3">
-                <div class="card text-white bg-success">
+                <div class="card card-metric bg-success text-white">
                     <div class="card-body">
                         <h5 class="card-title">Top Performer</h5>
                         <p class="card-text" th:text="${stats['topPerformer'] ?: 'N/A'}">N/A</p>
                     </div>
                 </div>
             </div>
-            <!-- Lowest Performer -->
             <div class="col-md-4 mb-3">
-                <div class="card text-white bg-danger">
+                <div class="card card-metric bg-danger text-white">
                     <div class="card-body">
                         <h5 class="card-title">Lowest Performer</h5>
                         <p class="card-text" th:text="${stats['lowestPerformer'] ?: 'N/A'}">N/A</p>
@@ -71,18 +102,16 @@
         
         <!-- Additional Metrics -->
         <div class="row mb-4">
-            <!-- Pass Percentage -->
             <div class="col-md-6 mb-3">
-                <div class="card text-white bg-info">
+                <div class="card card-metric bg-info text-white">
                     <div class="card-body">
                         <h5 class="card-title">Pass Percentage</h5>
                         <p class="card-text" th:text="${stats['passPercentage'] ?: 0} + '%'">0%</p>
                     </div>
                 </div>
             </div>
-            <!-- Fail Percentage -->
             <div class="col-md-6 mb-3">
-                <div class="card text-white bg-warning">
+                <div class="card card-metric bg-warning text-white">
                     <div class="card-body">
                         <h5 class="card-title">Fail Percentage</h5>
                         <p class="card-text" th:text="${stats['failPercentage'] ?: 0} + '%'">0%</p>
@@ -91,63 +120,73 @@
             </div>
         </div>
         
-        <!-- Trend Line Chart for Subject Averages -->
+        <!-- Grade Distribution Bar Chart for Specific Class -->
         <div class="chart-container mb-4">
-            <canvas id="trendChart"></canvas>
+            <canvas id="gradeBarChart"></canvas>
         </div>
         
         <!-- Recent Marksheets Table -->
-<div class="mb-4">
-  <h3>Recent Marksheets</h3>
-  <table class="table table-bordered table-striped">
-      <thead class="table-dark">
-          <tr>
-              <th>Student Name</th>
-              <th>Roll Number</th>
-              <th>Total</th>
-              <th>Grade</th>
-          </tr>
-      </thead>
-      <tbody>
-          <tr th:each="ms : ${stats['recentMarksheets']}">
-              <td th:text="${ms.studentName}">Student Name</td>
-              <td th:text="${ms.rollNumber}">Roll Number</td>
-              <td th:text="${ms.total}">Total</td>
-              <td th:text="${ms.grade}">Grade</td>
-          </tr>
-      </tbody>
-  </table>
-</div>
-
+        <div class="mb-4">
+          <h3>Recent Marksheets</h3>
+          <table class="table table-bordered table-striped">
+              <thead class="table-dark">
+                  <tr>
+                      <th>Student Name</th>
+                      <th>Roll Number</th>
+                      <th>Total</th>
+                      <th>Grade</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr th:each="ms : ${stats['recentMarksheets']}">
+                      <td th:text="${ms.studentName}">Student Name</td>
+                      <td th:text="${ms.rollNumber}">Roll Number</td>
+                      <td th:text="${ms.total}">Total</td>
+                      <td th:text="${ms.grade}">Grade</td>
+                  </tr>
+              </tbody>
+          </table>
+        </div>
     </div>
     
-    <footer>
+    <footer class="bg-dark text-white py-3">
       <div class="container text-center">
         <p>&copy; 2025 Marksheet Generator. All rights reserved.</p>
       </div>
     </footer>
     
-    <!-- Script for the Trend Line Chart -->
+    <!-- Script for the Grade Distribution Bar Chart -->
     <script th:inline="javascript">
         /*<![CDATA[*/
-        var labels = ["Math", "Science", "English"];
-        var trendData = [
-            parseFloat([[${stats['avgMath'] ?: 0}]]) || 0,
-            parseFloat([[${stats['avgScience'] ?: 0}]]) || 0,
-            parseFloat([[${stats['avgEnglish'] ?: 0}]]) || 0
+        var gradeLabels = ["A", "B", "C", "D"];
+        var gradeCounts = [
+            parseInt([[${stats['gradeA'] ?: 0}]]),
+            parseInt([[${stats['gradeB'] ?: 0}]]),
+            parseInt([[${stats['gradeC'] ?: 0}]]),
+            parseInt([[${stats['gradeD'] ?: 0}]])
         ];
-                         
-        const trendCtx = document.getElementById('trendChart').getContext('2d');
-        const trendChart = new Chart(trendCtx, {
-            type: 'line',
+        
+        const gradeBarCtx = document.getElementById('gradeBarChart').getContext('2d');
+        const gradeBarChart = new Chart(gradeBarCtx, {
+            type: 'bar',
             data: {
-                labels: labels,
+                labels: gradeLabels,
                 datasets: [{
-                    label: 'Average Marks',
-                    data: trendData,
-                    fill: false,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    tension: 0.1
+                    label: 'Number of Students',
+                    data: gradeCounts,
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(255, 99, 132, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
                 }]
             },
             options: {
@@ -155,8 +194,12 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        max: 100
+                        ticks: { stepSize: 1 }
                     }
+                },
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Grade Distribution' }
                 }
             }
         });

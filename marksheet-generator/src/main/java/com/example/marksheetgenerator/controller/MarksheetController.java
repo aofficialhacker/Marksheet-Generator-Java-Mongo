@@ -12,14 +12,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.io.PrintWriter;
+import java.io.IOException;
 
 @Controller
 public class MarksheetController {
@@ -39,24 +38,9 @@ public class MarksheetController {
     @PostMapping("/generate")
     public String generateMarksheet(@Valid @ModelAttribute("marksheet") Marksheet marksheet,
             BindingResult result,
-            @RequestParam("profilePictureFile") MultipartFile file,
             Model model) {
         if (result.hasErrors()) {
             return "marksheet_form";
-        }
-
-        // Handle file upload if provided
-        if (!file.isEmpty()) {
-            try {
-                String uploadDir = "src/main/resources/static/uploads/";
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                java.nio.file.Path path = java.nio.file.Paths.get(uploadDir + fileName);
-                java.nio.file.Files.createDirectories(path.getParent());
-                java.nio.file.Files.write(path, file.getBytes());
-                marksheet.setProfilePicture(fileName);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
         // Save the marksheet and display it
@@ -67,8 +51,7 @@ public class MarksheetController {
         String rollNumber = savedMarksheet.getRollNumber();
         if (!studentUserRepository.existsById(rollNumber)) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
-            String dobStr = savedMarksheet.getDob().atStartOfDay(ZoneOffset.UTC).format(formatter); // Ensure UTC date
-                                                                                                    // format
+            String dobStr = savedMarksheet.getDob().atStartOfDay(ZoneOffset.UTC).format(formatter);
             String hashedPassword = passwordEncoder.encode(dobStr);
             StudentUser newUser = new StudentUser(rollNumber, hashedPassword);
             studentUserRepository.save(newUser);
@@ -101,10 +84,10 @@ public class MarksheetController {
                             .filter(ms -> finalAssignedClass.equals(ms.getClassName()))
                             .collect(Collectors.toList());
         } else {
-            marksheets = (search != null && !search.trim().isEmpty()) ? marksheetService.searchMarksheets(search)
+            marksheets = (search != null && !search.trim().isEmpty())
+                    ? marksheetService.searchMarksheets(search)
                     : marksheetService.getAllMarksheets();
         }
-
         model.addAttribute("marksheets", marksheets);
         return "marksheet_list";
     }
@@ -140,7 +123,6 @@ public class MarksheetController {
                     .filter(ms -> finalAssignedClass.equals(ms.getClassName()))
                     .collect(Collectors.toList());
         }
-
         model.addAttribute("stats", marksheetService.computeDashboardData(marksheets));
         return "dashboard";
     }
@@ -157,9 +139,8 @@ public class MarksheetController {
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
         List<Marksheet> marksheets;
-        // If the user is a teacher, filter by assigned class
-        if (authentication != null && authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"))) {
+        if (authentication != null &&
+                authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"))) {
             String teacherUsername = authentication.getName();
             String assignedClass;
             switch (teacherUsername) {
@@ -177,10 +158,8 @@ public class MarksheetController {
             }
             marksheets = marksheetService.getMarksheetsByClass(assignedClass);
         } else {
-            // Otherwise, export all marksheets
             marksheets = marksheetService.getAllMarksheets();
         }
-
         PrintWriter writer = response.getWriter();
         writer.println("Student Name,Roll Number,Class,Date of Birth,Math,Science,English,Total,Percentage,Grade");
         for (Marksheet m : marksheets) {

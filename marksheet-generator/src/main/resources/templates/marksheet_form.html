@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <title>Marksheet Generator</title>
@@ -11,7 +12,7 @@
   <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" th:href="@{/}">Marksheet App</a>
+      <a class="navbar-brand" th:href="@{/}">Marksheet-Generator</a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav ms-auto">
           <!-- Teacher-specific links -->
@@ -52,8 +53,8 @@
   <!-- Main Container -->
   <div class="container mt-4">
     <h1 class="mb-4 text-center">Enter / Edit Student Details</h1>
-    <!-- IMPORTANT: enctype="multipart/form-data" is required for file uploads -->
-    <form th:action="@{/generate}" th:object="${marksheet}" method="post" enctype="multipart/form-data">
+    <!-- Removed enctype attribute as file upload is no longer needed -->
+    <form th:action="@{/generate}" th:object="${marksheet}" method="post">
       <!-- Hidden field to preserve id during editing -->
       <input type="hidden" th:field="*{id}" />
       <div th:if="${#fields.hasErrors('*')}" class="alert alert-danger">
@@ -83,12 +84,8 @@
         </div>
       </div>
       
-      <!-- Profile Picture Upload -->
-      <div class="mb-3">
-        <label class="form-label">Profile Picture</label>
-        <input type="file" class="form-control" name="profilePictureFile">
-      </div>
-      
+      <!-- Removed Profile Picture Upload Option -->
+
       <!-- Conditional Subjects Section -->
       <!-- For 10th Class -->
       <div th:if="${marksheet.className == '10th'}">
@@ -216,7 +213,7 @@
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      if(teacherUsername !== "") {
+      if (teacherUsername !== "") {
         var darkModeKey = "darkMode_" + teacherUsername;
         if (localStorage.getItem(darkModeKey) === "enabled") {
           document.body.classList.add("dark-mode");
@@ -229,7 +226,7 @@
         }
       }
     });
-    if(teacherUsername !== "") {
+    if (teacherUsername !== "") {
       document.getElementById("themeToggle").addEventListener("click", function () {
         var darkModeKey = "darkMode_" + teacherUsername;
         if (document.body.classList.contains("dark-mode")) {

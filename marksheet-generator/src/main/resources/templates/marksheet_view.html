@@ -1,26 +1,144 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
-  <title>Generated Marksheet</title>
+  <title>University Marksheet</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="/css/custom.css" rel="stylesheet">
   <!-- Include jsPDF and html2canvas libraries for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-</head>
 
+  <style>
+    /* Main card styling */
+    .marksheet-container {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 30px;
+      border-radius: 10px;
+      position: relative;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    /* Helper class to force light styling */
+    .no-dark-mode {
+      background: #fff !important;
+      color: #444 !important;
+      border-color: #ccc !important;
+    }
+    .no-dark-mode .marksheet-header h1,
+    .no-dark-mode .marksheet-header h2 {
+      color: #444 !important;
+    }
+    .no-dark-mode .line {
+      background: #007bff !important;
+    }
+    .no-dark-mode .subjects-table th {
+      background: #007bff !important;
+      color: #fff !important;
+    }
+    .no-dark-mode .subjects-table td {
+      border-color: #ccc !important;
+    }
+    .no-dark-mode .marksheet-footer-note {
+      border-top: 1px solid #ddd !important;
+      color: #666 !important;
+    }
+    
+    .marksheet-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .marksheet-header h1 {
+      font-family: "Georgia", serif;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      font-size: 1.8rem;
+    }
+    .marksheet-header h2 {
+      font-size: 1.2rem;
+      margin-bottom: 0;
+      color: #555;
+    }
+    .marksheet-header .line {
+      width: 100%;
+      height: 2px;
+      margin: 15px 0 25px;
+    }
+    /* Candidate details */
+    .candidate-info {
+      margin-bottom: 15px;
+      line-height: 1.6;
+    }
+    .candidate-info p {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+    /* Subjects table */
+    .subjects-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .subjects-table th,
+    .subjects-table td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      font-size: 0.95rem;
+    }
+    .subjects-table th {
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .subjects-table caption {
+      caption-side: top;
+      font-weight: bold;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+    /* Footer note */
+    .marksheet-footer-note {
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    /* Dark Mode Overrides for other elements remain */
+    body.dark-mode .navbar {
+      background-color: #212529 !important;
+    }
+    body.dark-mode .marksheet-header h1,
+    body.dark-mode .marksheet-header h2 {
+      color: #f8f9fa;
+    }
+    body.dark-mode .line {
+      background: #999;
+    }
+    body.dark-mode .subjects-table th {
+      background: #444;
+      color: #f8f9fa;
+    }
+    body.dark-mode .subjects-table td {
+      border-color: #555;
+    }
+    body.dark-mode .marksheet-footer-note {
+      border-top: 1px solid #555;
+      color: #ccc;
+    }
+  </style>
+</head>
 <body>
   <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/">Marksheet App</a>
+      <a class="navbar-brand" href="/">Marksheet-Generator</a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav ms-auto">
-          <!-- Navigation items for Teacher only -->
+          <!-- Teacher-specific navigation -->
           <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" href="/">Add Marksheet</a>
+            <a class="nav-link" href="/teacher/addMarksheet">Add Marksheet</a>
           </li>
           <li class="nav-item" sec:authorize="hasRole('TEACHER')">
             <a class="nav-link" href="/marksheets">View All</a>
@@ -28,14 +146,14 @@
           <li class="nav-item" sec:authorize="hasRole('TEACHER')">
             <a class="nav-link" href="/dashboard">Dashboard</a>
           </li>
-          <!-- Conditional Logout Links -->
+          <!-- Logout -->
           <li class="nav-item" sec:authorize="hasRole('TEACHER')">
             <a class="nav-link" href="/teacher/logout">Logout</a>
           </li>
           <li class="nav-item" sec:authorize="hasRole('STUDENT')">
             <a class="nav-link" href="/logout">Logout</a>
           </li>
-          <!-- Dark Mode toggle available only for teachers -->
+          <!-- Dark Mode toggle for teachers only -->
           <li class="nav-item" sec:authorize="hasRole('TEACHER')">
             <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button>
           </li>
@@ -46,70 +164,145 @@
 
   <!-- Marksheet Content -->
   <div class="container mt-4">
-    <h1 class="text-center mb-4">Marksheet</h1>
-    <!-- The card below will be captured as an image for PDF generation -->
-    <div class="card" id="marksheetContent">
-      <div class="card-body">
-        <p><strong>Student Name:</strong> <span th:text="${marksheet.studentName}"></span></p>
+    <!-- Add helper class "no-dark-mode" to the marksheet container -->
+    <div class="marksheet-container no-dark-mode" id="marksheetContent">
+      <!-- Header Section -->
+      <div class="marksheet-header">
+        <h1>XYZ University</h1>
+        <h2>Statement of Marks</h2>
+        <div class="line"></div>
+      </div>
+      <!-- Candidate Info -->
+      <div class="candidate-info">
+        <p><strong>Candidate's Name:</strong> <span th:text="${marksheet.studentName}"></span></p>
         <p><strong>Roll Number:</strong> <span th:text="${marksheet.rollNumber}"></span></p>
         <p><strong>Class:</strong> <span th:text="${marksheet.className}"></span></p>
         <p><strong>Date of Birth:</strong> <span th:text="${marksheet.dob}"></span></p>
-        <!-- Display profile picture if available -->
-        <!-- Display profile picture if available -->
-        <div th:if="${marksheet.profilePicture != null}" class="position-absolute top-0 end-0">
-          <img th:src="@{'/uploads/' + ${marksheet.profilePicture}}"
-               alt="Profile Picture" class="img-thumbnail" style="max-width: 150px;">
-        </div>
+      </div>
+      <hr />
+      <!-- Subjects Section -->
+      <div th:if="${marksheet.className == '10th'}">
+        <table class="subjects-table">
+          <caption>10th Class Subjects</caption>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Marks Obtained</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Math</td>
+              <td th:text="${marksheet.math}">0</td>
+            </tr>
+            <tr>
+              <td>Science</td>
+              <td th:text="${marksheet.science}">0</td>
+            </tr>
+            <tr>
+              <td>English</td>
+              <td th:text="${marksheet.english}">0</td>
+            </tr>
+            <tr>
+              <td>Hindi</td>
+              <td th:text="${marksheet.hindi}">0</td>
+            </tr>
+            <tr>
+              <td>Marathi</td>
+              <td th:text="${marksheet.marathi}">0</td>
+            </tr>
+            <tr>
+              <td>History</td>
+              <td th:text="${marksheet.history}">0</td>
+            </tr>
+            <tr>
+              <td>Geography</td>
+              <td th:text="${marksheet.geography}">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-        <hr />
-        <!-- Subjects Section -->
-        <div th:if="${marksheet.className == '10th'}">
-          <h4>Subjects (10th Class)</h4>
-          <p><strong>Math:</strong> <span th:text="${marksheet.math}"></span></p>
-          <p><strong>Science:</strong> <span th:text="${marksheet.science}"></span></p>
-          <p><strong>English:</strong> <span th:text="${marksheet.english}"></span></p>
-          <p><strong>Hindi:</strong> <span th:text="${marksheet.hindi}"></span></p>
-          <p><strong>Marathi:</strong> <span th:text="${marksheet.marathi}"></span></p>
-          <p><strong>History:</strong> <span th:text="${marksheet.history}"></span></p>
-          <p><strong>Geography:</strong> <span th:text="${marksheet.geography}"></span></p>
-        </div>
-        <div th:if="${marksheet.className == '11th' or marksheet.className == '12th'}">
-          <h4>Subjects (11th/12th Class)</h4>
-          <div th:switch="${marksheet.stream}">
-            <div th:case="'Science'">
-              <p><strong>Math:</strong> <span th:text="${marksheet.math}"></span></p>
-              <p><strong>Physics:</strong> <span th:text="${marksheet.physics}"></span></p>
-              <p><strong>Chemistry:</strong> <span th:text="${marksheet.chemistry}"></span></p>
-              <p><strong>Biology:</strong> <span th:text="${marksheet.biology}"></span></p>
-            </div>
-            <div th:case="'Commerce'">
-              <p><strong>Math:</strong> <span th:text="${marksheet.math}"></span></p>
-              <p><strong>Economics:</strong> <span th:text="${marksheet.economics}"></span></p>
-              <p><strong>Business Studies:</strong> <span th:text="${marksheet.businessStudies}"></span></p>
-              <p><strong>Accountancy:</strong> <span th:text="${marksheet.accountancy}"></span></p>
-            </div>
-            <div th:case="'Arts'">
-              <p><strong>History:</strong> <span th:text="${marksheet.history}"></span></p>
-              <p><strong>Political Science:</strong> <span th:text="${marksheet.politicalScience}"></span></p>
-              <p><strong>Sociology:</strong> <span th:text="${marksheet.sociology}"></span></p>
-              <p><strong>Geography:</strong> <span th:text="${marksheet.geography}"></span></p>
-            </div>
-            <div th:case="*">
-              <p>Stream not specified.</p>
-            </div>
-          </div>
-        </div>
-        <hr />
-        <!-- Overall Results -->
+      <div th:if="${marksheet.className == '11th' or marksheet.className == '12th'}">
+        <table class="subjects-table">
+          <caption th:text="${marksheet.className + ' Class Subjects (' + marksheet.stream + ')'}"></caption>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Marks Obtained</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${marksheet.stream=='Science'}">
+              <td>Math</td>
+              <td th:text="${marksheet.math}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Science'}">
+              <td>Physics</td>
+              <td th:text="${marksheet.physics}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Science'}">
+              <td>Chemistry</td>
+              <td th:text="${marksheet.chemistry}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Science'}">
+              <td>Biology</td>
+              <td th:text="${marksheet.biology}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Commerce'}">
+              <td>Math</td>
+              <td th:text="${marksheet.math}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Commerce'}">
+              <td>Economics</td>
+              <td th:text="${marksheet.economics}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Commerce'}">
+              <td>Business Studies</td>
+              <td th:text="${marksheet.businessStudies}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Commerce'}">
+              <td>Accountancy</td>
+              <td th:text="${marksheet.accountancy}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Arts'}">
+              <td>History</td>
+              <td th:text="${marksheet.history}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Arts'}">
+              <td>Political Science</td>
+              <td th:text="${marksheet.politicalScience}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Arts'}">
+              <td>Sociology</td>
+              <td th:text="${marksheet.sociology}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream=='Arts'}">
+              <td>Geography</td>
+              <td th:text="${marksheet.geography}">0</td>
+            </tr>
+            <tr th:if="${marksheet.stream!='Science' and marksheet.stream!='Commerce' and marksheet.stream!='Arts'}">
+              <td colspan="2">Stream not specified.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Summary Section -->
+      <hr />
+      <div class="candidate-info">
         <p><strong>Total:</strong> <span th:text="${marksheet.total}"></span></p>
-        <p><strong>Percentage:</strong> <span th:text="${marksheet.percentage}"></span>%</p>
+        <p><strong>Percentage:</strong> <span th:text="${T(java.lang.String).format('%.2f', marksheet.percentage) + '%'}"></span></p>
         <p><strong>Grade:</strong> <span th:text="${marksheet.grade}"></span></p>
       </div>
+
+      <div class="marksheet-footer-note">
+        <p>This is an official statement of marks issued by XYZ University</p>
+      </div>
     </div>
+
     <div class="text-center mt-4">
-      <!-- Download PDF button -->
       <button class="btn btn-secondary me-2" onclick="downloadPDF()">Download PDF</button>
-      <!-- "Generate Another" button is only for teachers -->
       <span sec:authorize="hasRole('TEACHER')">
         <a th:href="@{/teacher/addMarksheet}" class="btn btn-primary">Generate Another</a>
       </span>
@@ -117,7 +310,7 @@
   </div>
 
   <footer>
-    <div class="container">
+    <div class="container text-center">
       <p>&copy; 2025 Marksheet Generator. All rights reserved.</p>
     </div>
   </footer>
@@ -126,71 +319,31 @@
   <script>
     function downloadPDF() {
       const { jsPDF } = window.jspdf;
-      // Create a jsPDF instance in points (pt) for finer control on an A4 page
       const doc = new jsPDF('p', 'pt', 'a4');
-
-      // Define margins and page dimensions
-      const margin = 40;
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-
-      // --- Header ---
-      // (Optional) If you have a university logo, you can add it here:
-      // doc.addImage('logo_url', 'PNG', margin, margin, 60, 60);
-
-      // University name, department, and marksheet title
-      doc.setFont("times", "bold");
-      doc.setFontSize(24);
-      doc.text("XYZ University", pageWidth / 2, margin + 20, { align: "center" });
-      doc.setFontSize(18);
-      doc.text("Department of Mumbai/Pune", pageWidth / 2, margin + 45, { align: "center" });
-      doc.setFontSize(16);
-      doc.text("University Marksheet", pageWidth / 2, margin + 70, { align: "center" });
-
-      // Draw a horizontal line under the header
-      doc.setLineWidth(1);
-      doc.line(margin, margin + 80, pageWidth - margin, margin + 80);
-
-      // --- Capture Content ---
-      // Use html2canvas with increased scale for higher resolution
-      html2canvas(document.getElementById("marksheetContent"), { scale: 2 }).then(function (canvas) {
+      html2canvas(document.getElementById("marksheetContent"), { scale: 2 }).then(function(canvas) {
         const imgData = canvas.toDataURL('image/png');
         const imgProps = doc.getImageProperties(imgData);
-        const availableWidth = pageWidth - margin * 2;
-        const imgWidth = availableWidth;
+        const pdfWidth = doc.internal.pageSize.getWidth() - 80;
+        const imgWidth = pdfWidth;
         const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-
-        // Position the image below the header
-        const startY = margin + 90;
-        doc.addImage(imgData, 'PNG', margin, startY, imgWidth, imgHeight);
-
-        // Draw a subtle border around the captured marksheet content
-        doc.setLineWidth(0.5);
-        doc.rect(margin, startY, imgWidth, imgHeight);
-
-        // --- Footer ---
-        doc.setFontSize(10);
-        doc.text("Generated on: " + new Date().toLocaleString(), pageWidth / 2, pageHeight - margin, { align: "center" });
-
-        // Save the PDF
+        const startY = 60;
+        doc.addImage(imgData, 'PNG', 40, startY, imgWidth, imgHeight);
         doc.save("marksheet.pdf");
       });
     }
   </script>
-
-
 
   <!-- Dark Mode Script (Teacher-specific only) -->
   <script th:inline="javascript">
     var teacherUsername = /*[[${#authorization.expression('hasRole("TEACHER")') ? #authentication.name : ""}]]*/ "";
   </script>
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function() {
       if (teacherUsername !== "") {
         var darkModeKey = "darkMode_" + teacherUsername;
         if (localStorage.getItem(darkModeKey) === "enabled") {
           document.body.classList.add("dark-mode");
-          document.querySelectorAll(".navbar").forEach(function (navbar) {
+          document.querySelectorAll(".navbar").forEach(function(navbar) {
             navbar.classList.add("dark-mode");
           });
           document.getElementById("themeToggle").textContent = "Light Mode";
@@ -200,18 +353,18 @@
       }
     });
     if (teacherUsername !== "") {
-      document.getElementById("themeToggle").addEventListener("click", function () {
+      document.getElementById("themeToggle").addEventListener("click", function() {
         var darkModeKey = "darkMode_" + teacherUsername;
         if (document.body.classList.contains("dark-mode")) {
           document.body.classList.remove("dark-mode");
-          document.querySelectorAll(".navbar").forEach(function (navbar) {
+          document.querySelectorAll(".navbar").forEach(function(navbar) {
             navbar.classList.remove("dark-mode");
           });
           localStorage.setItem(darkModeKey, "disabled");
           this.textContent = "Dark Mode";
         } else {
           document.body.classList.add("dark-mode");
-          document.querySelectorAll(".navbar").forEach(function (navbar) {
+          document.querySelectorAll(".navbar").forEach(function(navbar) {
             navbar.classList.add("dark-mode");
           });
           localStorage.setItem(darkModeKey, "enabled");
@@ -221,7 +374,39 @@
     }
   </script>
 
+  <!-- jQuery for stream subjects dynamic rendering -->
+  <script>
+    $(document).ready(function(){
+      $('#streamSelect').change(function(){
+        var stream = $(this).val();
+        var subjectsHtml = '';
+        if(stream === 'Science'){
+          subjectsHtml += '<div class="row mb-3">';
+          subjectsHtml += '<div class="col"><label class="form-label">Physics</label><input type="number" class="form-control" name="physics" required></div>';
+          subjectsHtml += '<div class="col"><label class="form-label">Chemistry</label><input type="number" class="form-control" name="chemistry" required></div>';
+          subjectsHtml += '<div class="col"><label class="form-label">Mathematics</label><input type="number" class="form-control" name="math" required></div>';
+          subjectsHtml += '<div class="col"><label class="form-label">Biology</label><input type="number" class="form-control" name="biology" required></div>';
+          subjectsHtml += '</div>';
+        } else if(stream === 'Commerce'){
+          subjectsHtml += '<div class="row mb-3">';
+          subjectsHtml += '<div class="col"><label class="form-label">Economics</label><input type="number" class="form-control" name="economics" required></div>';
+          subjectsHtml += '<div class="col"><label class="form-label">Business Studies</label><input type="number" class="form-control" name="businessStudies" required></div>';
+          subjectsHtml += '<div class="col"><label class="form-label">Accountancy</label><input type="number" class="form-control" name="accountancy" required></div>';
+          subjectsHtml += '<div class="col"><label class="form-label">Mathematics</label><input type="number" class="form-control" name="math" required></div>';
+          subjectsHtml += '</div>';
+        } else if(stream === 'Arts'){
+          subjectsHtml += '<div class="row mb-3">';
+          subjectsHtml += '<div class="col"><label class="form-label">History</label><input type="number" class="form-control" name="history" required></div>';
+          subjectsHtml += '<div class="col"><label class="form-label">Political Science</label><input type="number" class="form-control" name="politicalScience" required></div>';
+          subjectsHtml += '<div class="col"><label class="form-label">Sociology</label><input type="number" class="form-control" name="sociology" required></div>';
+          subjectsHtml += '<div class="col"><label class="form-label">Geography</label><input type="number" class="form-control" name="geography" required></div>';
+          subjectsHtml += '</div>';
+        }
+        $('#streamSubjects').html(subjectsHtml);
+      });
+    });
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

@@ -2,15 +2,52 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>Login Selection</title>
+  <title>Login Selection - Marksheet Generator</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    .login-card h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #343a40;
+    }
+    .login-card p {
+      font-size: 1.1rem;
+      color: #555;
+      margin-bottom: 30px;
+    }
+    .btn-custom {
+      width: 100%;
+      padding: 10px;
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container mt-5 text-center">
+  <div class="login-card">
     <h1>Welcome to Marksheet Generator</h1>
     <p>Select your login type:</p>
-    <a href="/student/login" class="btn btn-primary m-2">Student Login</a>
-    <a href="/teacher/login" class="btn btn-secondary m-2">Teacher Login</a>
+    <a href="/student/login" class="btn btn-primary btn-custom">Student Login</a>
+    <a href="/teacher/login" class="btn btn-secondary btn-custom">Teacher Login</a>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

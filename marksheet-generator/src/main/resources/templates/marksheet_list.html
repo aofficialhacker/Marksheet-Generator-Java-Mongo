@@ -12,7 +12,7 @@
   <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" th:href="@{/}">Marksheet App</a>
+      <a class="navbar-brand" th:href="@{/}">Marksheet-Generator</a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav ms-auto">
           <!-- Teacher-specific navigation -->
@@ -74,9 +74,7 @@
           <th>Roll Number</th>
           <th>Class</th>
           <th>Date of Birth</th>
-          <th>Math</th>
-          <th>Science</th>
-          <th>English</th>
+          <!-- Removed Math, Science, English columns -->
           <th>Total</th>
           <th>Percentage</th>
           <th>Grade</th>
@@ -89,14 +87,11 @@
           <td th:text="${ms.rollNumber}"></td>
           <td th:text="${ms.className}"></td>
           <td th:text="${ms.dob}"></td>
-          <td th:text="${ms.math}"></td>
-          <td th:text="${ms.science}"></td>
-          <td th:text="${ms.english}"></td>
+          <!-- Removed corresponding fields for Math, Science, English -->
           <td th:text="${ms.total}"></td>
-          <td th:text="${ms.percentage}"></td>
+          <td th:text="${T(java.lang.String).format('%.2f', ms.percentage)+ '%'}"></td>
           <td th:text="${ms.grade}"></td>
           <td>
-            <!-- New View Button -->
             <a th:href="@{/marksheets/view/{id}(id=${ms.id})}" class="btn btn-info btn-sm mb-1">View</a>
             <a th:href="@{/marksheets/edit/{id}(id=${ms.id})}" class="btn btn-warning btn-sm mb-1">Edit</a>
             <form th:action="@{/marksheets/delete/{id}(id=${ms.id})}" method="post" style="display:inline;">
@@ -120,7 +115,7 @@
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script>
     $(document).ready(function () {
-      // Initialize DataTables with search disabled to remove the built-in search box
+      // Initialize DataTables with search disabled (removing built-in search box)
       $('#marksheetTable').DataTable({
         searching: false
       });
