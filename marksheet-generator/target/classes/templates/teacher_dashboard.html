@@ -21,7 +21,8 @@
             <button id="themeToggle" class="btn btn-link nav-link">Dark Mode</button>
           </li>
           <li class="nav-item" sec:authorize="hasRole('TEACHER')">
-            <a class="nav-link" th:href="@{/teacher/logout}">Logout</a>
+            <a class="nav-link" th:href="@{/teacher/logout}"
+                   onclick="return confirm('Are you sure you want to logout?');">Logout</a>
           </li>
         </ul>
       </div>

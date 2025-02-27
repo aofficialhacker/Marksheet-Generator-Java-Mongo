@@ -18,11 +18,34 @@ public class MarksheetService {
     }
 
     public Marksheet generateAndSaveMarksheet(Marksheet marksheet) {
+        // First calculate results (this may include total and percentage)
         marksheet.calculateResults();
+        // Then update grade according to new grading criteria
+        updateGrade(marksheet);
         if (marksheet.getId() != null && marksheet.getId().trim().isEmpty()) {
             marksheet.setId(null);
         }
         return marksheetRepository.save(marksheet);
+    }
+
+    // New method to update grade based on the new criteria.
+    public void updateGrade(Marksheet marksheet) {
+        double percentage = marksheet.getPercentage();
+        if (percentage >= 90) {
+            marksheet.setGrade("A+");
+        } else if (percentage >= 80) {
+            marksheet.setGrade("A");
+        } else if (percentage >= 70) {
+            marksheet.setGrade("B+");
+        } else if (percentage >= 60) {
+            marksheet.setGrade("B");
+        } else if (percentage >= 50) {
+            marksheet.setGrade("C");
+        } else if (percentage >= 40) {
+            marksheet.setGrade("D");
+        } else {
+            marksheet.setGrade("F");
+        }
     }
 
     public List<Marksheet> getAllMarksheets() {
@@ -90,13 +113,17 @@ public class MarksheetService {
         return String.format("%03d", nextRoll);
     }
 
-    // New method: compute grade distribution based on a provided list
+    // Updated method: compute grade distribution based on a provided list.
     public Map<String, Integer> getGradeDistribution(List<Marksheet> list) {
         Map<String, Integer> distribution = new HashMap<>();
+        // Initialize with new grade keys
+        distribution.put("A+", 0);
         distribution.put("A", 0);
+        distribution.put("B+", 0);
         distribution.put("B", 0);
         distribution.put("C", 0);
         distribution.put("D", 0);
+        distribution.put("F", 0);
         for (Marksheet m : list) {
             String grade = m.getGrade();
             distribution.put(grade, distribution.getOrDefault(grade, 0) + 1);
@@ -116,10 +143,13 @@ public class MarksheetService {
             data.put("passPercentage", "0.00");
             data.put("failPercentage", "0.00");
             data.put("recentMarksheets", new ArrayList<Marksheet>());
+            data.put("gradeA+", 0);
             data.put("gradeA", 0);
+            data.put("gradeB+", 0);
             data.put("gradeB", 0);
             data.put("gradeC", 0);
             data.put("gradeD", 0);
+            data.put("gradeF", 0);
             return data;
         }
         double totalMath = list.stream().mapToInt(Marksheet::getMath).sum();
@@ -128,8 +158,6 @@ public class MarksheetService {
         data.put("avgMath", totalMath / list.size());
         data.put("avgScience", totalScience / list.size());
         data.put("avgEnglish", totalEnglish / list.size());
-        Marksheet top = list.stream().max(Comparator.comparingInt(Marksheet::getTotal)).orElse(null);
-        Marksheet low = list.stream().min(Comparator.comparingInt(Marksheet::getTotal)).orElse(null);
 
         // Compute top performers (handle ties)
         int maxTotal = list.stream().mapToInt(Marksheet::getTotal).max().orElse(0);
@@ -151,10 +179,11 @@ public class MarksheetService {
                 .collect(Collectors.joining(", "));
         data.put("lowestPerformer", lowStr.isEmpty() ? "N/A" : lowStr);
 
-        long passCount = list.stream().filter(m -> !"D".equalsIgnoreCase(m.getGrade())).count();
+        long passCount = list.stream().filter(m -> !m.getGrade().equalsIgnoreCase("F")).count();
         double passPercentage = ((double) passCount / list.size()) * 100;
         data.put("passPercentage", String.format("%.2f", passPercentage));
         data.put("failPercentage", String.format("%.2f", 100 - passPercentage));
+
         List<Marksheet> recent = new ArrayList<>(list);
         Collections.reverse(recent);
         if (recent.size() > 5) {
@@ -165,10 +194,13 @@ public class MarksheetService {
         // Compute grade distribution for the provided list (filtered by class for
         // teacher)
         Map<String, Integer> gradeDist = getGradeDistribution(list);
+        data.put("gradeA+", gradeDist.get("A+"));
         data.put("gradeA", gradeDist.get("A"));
+        data.put("gradeB+", gradeDist.get("B+"));
         data.put("gradeB", gradeDist.get("B"));
         data.put("gradeC", gradeDist.get("C"));
         data.put("gradeD", gradeDist.get("D"));
+        data.put("gradeF", gradeDist.get("F"));
 
         return data;
     }

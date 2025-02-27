@@ -30,6 +30,7 @@ public class Marksheet {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dob;
 
+    // For 10th class subjects
     @Min(0)
     @Max(100)
     private int math;
@@ -97,7 +98,7 @@ public class Marksheet {
     private double percentage;
     private String grade;
 
-    // Profile Picture filename
+    // Profile picture (if needed)
     private String profilePicture;
 
     public Marksheet() {
@@ -110,27 +111,48 @@ public class Marksheet {
         this.dob = dob;
     }
 
-    // Calculate total marks, percentage and assign grade
+    // Calculate total marks, percentage, and assign grade using the new criteria.
     public void calculateResults() {
         if ("10th".equals(className)) {
+            // For 10th class, calculate over 7 subjects.
             this.total = math + science + english + hindi + marathi + history + geography;
             this.percentage = total / 7.0;
         } else if ("11th".equals(className) || "12th".equals(className)) {
+            // For 11th/12th, include English for all streams.
             if ("Science".equalsIgnoreCase(stream)) {
-                this.total = math + physics + chemistry + biology;
-                this.percentage = total / 4.0;
+                // Subjects: Math, Physics, Chemistry, Biology, English
+                this.total = math + physics + chemistry + biology + english;
+                this.percentage = total / 5.0;
             } else if ("Commerce".equalsIgnoreCase(stream)) {
-                this.total = math + economics + businessStudies + accountancy;
-                this.percentage = total / 4.0;
+                // Subjects: Math, Economics, Business Studies, Accountancy, English
+                this.total = math + economics + businessStudies + accountancy + english;
+                this.percentage = total / 5.0;
             } else if ("Arts".equalsIgnoreCase(stream)) {
-                this.total = history + politicalScience + sociology + geography;
-                this.percentage = total / 4.0;
+                // Subjects: History, Political Science, Sociology, Geography, English
+                this.total = history + politicalScience + sociology + geography + english;
+                this.percentage = total / 5.0;
             } else {
                 this.total = 0;
                 this.percentage = 0;
             }
         }
-        this.grade = (percentage >= 75) ? "A" : (percentage >= 60) ? "B" : (percentage >= 40) ? "C" : "D";
+
+        // Assign grade based on the updated criteria.
+        if (percentage >= 90) {
+            this.grade = "A+";
+        } else if (percentage >= 80) {
+            this.grade = "A";
+        } else if (percentage >= 70) {
+            this.grade = "B+";
+        } else if (percentage >= 60) {
+            this.grade = "B";
+        } else if (percentage >= 50) {
+            this.grade = "C";
+        } else if (percentage >= 40) {
+            this.grade = "D";
+        } else {
+            this.grade = "F";
+        }
     }
 
     // Getters and Setters
@@ -321,5 +343,9 @@ public class Marksheet {
 
     public void setProfilePicture(String profilePicture) {
         this.profilePicture = profilePicture;
+    }
+
+    public void setGrade(String grade) {
+        this.grade = grade;
     }
 }
